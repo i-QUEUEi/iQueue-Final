@@ -1,0 +1,457 @@
+import { useState } from "react";
+import type { AdminPageType } from '@/pages/admin/AdminLayout';
+
+interface SidebarItem {
+  label: string;
+  icon: string;
+  section: 'overview' | 'operations' | 'system';
+}
+
+const SIDEBAR_ITEMS: { [key: string]: SidebarItem[] } = {
+  overview: [
+    { label: 'Dashboard', icon: 'dashboard', section: 'overview' },
+    { label: 'Analytics', icon: 'analytics', section: 'overview' },
+    { label: 'Forecast', icon: 'trending_up', section: 'overview' }
+  ],
+  operations: [
+    { label: 'Visits', icon: 'people', section: 'operations' },
+    { label: 'Reports', icon: 'description', section: 'operations' },
+    { label: 'Branches', icon: 'location_on', section: 'operations' },
+    { label: 'Announcements', icon: 'notifications', section: 'operations' }
+  ],
+  system: [
+    { label: 'System Status', icon: 'health_and_safety', section: 'system' },
+    { label: 'AI Insights', icon: 'auto_awesome', section: 'system' }
+  ]
+};
+
+interface AdminSidebarProps {
+  activePage: AdminPageType;
+  onPageChange: (page: AdminPageType) => void;
+}
+
+const mapLabelToPage = (label: string): AdminPageType => {
+  const mapping: { [key: string]: AdminPageType } = {
+    'dashboard': 'dashboard',
+    'analytics': 'analytics',
+    'forecast': 'forecast',
+    'visits': 'visits',
+    'reports': 'reports',
+    'branches': 'branches',
+    'announcements': 'announcements',
+    'system': 'system-status'
+  };
+  return mapping[label.toLowerCase()] || 'dashboard';
+};
+
+export default function AdminSidebar({ activePage, onPageChange }: AdminSidebarProps) {
+  const [collapsed, setCollapsed] = useState(false);
+
+  const allSections = [
+    { key: 'overview', label: 'Overview', items: SIDEBAR_ITEMS.overview },
+    { key: 'operations', label: 'Operations', items: SIDEBAR_ITEMS.operations },
+    { key: 'system', label: 'System', items: SIDEBAR_ITEMS.system },
+  ];
+
+  return (
+    <>
+      <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,300,0,0" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+      <style>{`
+        * { box-sizing: border-box; }
+
+        /* ── Shell ── */
+        .admin-sidebar {
+          font-family: 'Google Sans', 'Product Sans', sans-serif;
+          width: 256px;
+          min-width: 256px;
+          background: #ffffff;
+          border-right: 1px solid #f0f0f2;
+          height: 100vh;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          position: relative;
+          transition: width 0.38s cubic-bezier(0.4,0,0.2,1),
+                      min-width 0.38s cubic-bezier(0.4,0,0.2,1);
+        }
+        .admin-sidebar.collapsed {
+          width: 72px;
+          min-width: 72px;
+        }
+
+        /* ── Logo / toggle ── */
+        .sidebar-logo {
+          padding: 20px 16px;
+          border-bottom: 1px solid #f0f0f2;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          overflow: hidden;
+          flex-shrink: 0;
+          cursor: pointer;
+          user-select: none;
+          transition: padding 0.38s cubic-bezier(0.4,0,0.2,1),
+                      justify-content 0.38s cubic-bezier(0.4,0,0.2,1);
+        }
+        .admin-sidebar.collapsed .sidebar-logo {
+          justify-content: center;
+          padding: 20px 16px;
+        }
+        .sidebar-logo-mark {
+          width: 40px; height: 40px; min-width: 40px;
+          background: linear-gradient(135deg, #F90000, #D62F2F);
+          border-radius: 10px;
+          display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 2px 8px rgba(249,0,0,0.25);
+          transition: box-shadow 0.22s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
+          position: relative; overflow: hidden; flex-shrink: 0;
+        }
+        .sidebar-logo:hover .sidebar-logo-mark {
+          box-shadow: 0 5px 18px rgba(249,0,0,0.42);
+          transform: scale(1.06);
+        }
+        .sidebar-logo:active .sidebar-logo-mark { transform: scale(0.97); }
+        .logo-text-iq {
+          color: white; font-weight: 700; font-size: 15px;
+          letter-spacing: -0.5px; position: relative; z-index: 1;
+          transition: opacity 0.18s ease, transform 0.2s cubic-bezier(0.4,0,0.2,1);
+        }
+        .sidebar-logo:hover .logo-text-iq { opacity: 0; transform: scale(0.65); }
+        .logo-chevron {
+          position: absolute; inset: 0;
+          display: flex; align-items: center; justify-content: center;
+          background: linear-gradient(135deg, #c72020, #991a1a);
+          border-radius: 10px;
+          opacity: 0; transform: scale(0.75);
+          transition: opacity 0.18s ease, transform 0.2s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .sidebar-logo:hover .logo-chevron { opacity: 1; transform: scale(1); }
+        .logo-chevron .material-symbols-rounded {
+          font-size: 20px; color: white;
+          font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+          transition: transform 0.38s cubic-bezier(0.4,0,0.2,1);
+        }
+        .admin-sidebar.collapsed .logo-chevron .material-symbols-rounded {
+          transform: rotate(180deg);
+        }
+        .sidebar-logo-text {
+          overflow: hidden; white-space: nowrap;
+          opacity: 1; transform: translateX(0); max-width: 200px;
+          transition: opacity 0.26s cubic-bezier(0.4,0,0.2,1),
+                      transform 0.26s cubic-bezier(0.4,0,0.2,1),
+                      max-width 0.38s cubic-bezier(0.4,0,0.2,1);
+        }
+        .admin-sidebar.collapsed .sidebar-logo-text {
+          opacity: 0; transform: translateX(-10px); max-width: 0; pointer-events: none;
+        }
+        .sidebar-logo-text h2 { font-size: 15px; font-weight: 600; color: #1C1B1F; margin: 0; line-height: 1.2; }
+        .sidebar-logo-text p  { font-size: 11px; color: #9e9ea7; margin: 0; line-height: 1.4; }
+
+        /* ── Nav ── */
+        .sidebar-nav {
+          flex: 1; padding: 16px 10px;
+          display: flex; flex-direction: column; gap: 24px;
+          overflow-y: auto; overflow-x: hidden;
+          scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .sidebar-nav::-webkit-scrollbar { display: none; }
+
+        /* ── Section label ── */
+        .sidebar-section-label {
+          font-size: 10px; font-weight: 600; color: #b0b0ba;
+          text-transform: uppercase; letter-spacing: 0.08em;
+          padding: 0 10px; margin-bottom: 6px;
+          white-space: nowrap; overflow: hidden;
+          opacity: 1; max-height: 20px; transform: translateX(0);
+          transition: opacity 0.22s cubic-bezier(0.4,0,0.2,1) 0.04s,
+                      transform 0.22s cubic-bezier(0.4,0,0.2,1) 0.04s,
+                      max-height 0.28s cubic-bezier(0.4,0,0.2,1),
+                      margin-bottom 0.28s cubic-bezier(0.4,0,0.2,1);
+        }
+        .admin-sidebar.collapsed .sidebar-section-label {
+          opacity: 0; transform: translateX(-8px);
+          max-height: 0; margin-bottom: 0; pointer-events: none;
+        }
+
+        /* ── Nav button ── */
+        .sidebar-btn {
+          width: 100%; border: none; background: transparent; cursor: pointer;
+          display: flex; align-items: center; justify-content: flex-start;
+          gap: 10px; padding: 9px 10px; border-radius: 10px;
+          position: relative; overflow: hidden;
+          transition: background 0.18s ease,
+                      padding 0.38s cubic-bezier(0.4,0,0.2,1),
+                      justify-content 0s;
+        }
+
+        /* ── COLLAPSED ONLY: center the icon ── */
+        .admin-sidebar.collapsed .sidebar-btn {
+          justify-content: center;
+          padding: 10px 0;
+        }
+
+        .sidebar-btn::before {
+          content: ''; position: absolute; inset: 0; border-radius: 10px;
+          background: linear-gradient(135deg, #F90000, #D62F2F);
+          opacity: 0; transition: opacity 0.2s ease;
+        }
+        .sidebar-btn.active::before { opacity: 1; }
+        .sidebar-btn:not(.active):hover { background: #f5f5f8; }
+
+        /* icon */
+        .sidebar-btn-icon {
+          font-size: 20px; color: #9292a0; flex-shrink: 0;
+          font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+          position: relative; z-index: 1;
+          line-height: 1; display: flex; align-items: center;
+          transition: color 0.18s ease,
+                      transform 0.24s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .sidebar-btn.active .sidebar-btn-icon { color: white; }
+        .sidebar-btn:not(.active):hover .sidebar-btn-icon {
+          color: #F90000;
+          transform: scale(1.2) rotate(-5deg);
+        }
+
+        /* label */
+        .sidebar-btn-label {
+          margin-left: 6px;
+          font-size: 15px; font-weight: 500; color: #1C1B1F;
+          white-space: nowrap; overflow: hidden;
+          opacity: 1; max-width: 160px; transform: translateX(0);
+          transition: opacity 0.24s cubic-bezier(0.4,0,0.2,1),
+                      transform 0.24s cubic-bezier(0.4,0,0.2,1),
+                      max-width 0.38s cubic-bezier(0.4,0,0.2,1),
+                      color 0.18s ease;
+          position: relative; z-index: 1;
+        }
+        .sidebar-btn.active .sidebar-btn-label { color: white; }
+        .admin-sidebar.collapsed .sidebar-btn-label {
+          opacity: 0; transform: translateX(-8px);
+          max-width: 0; pointer-events: none;
+        }
+
+        /* ── Tooltip (collapsed only) ── */
+        .sidebar-btn-tooltip {
+          position: absolute; left: calc(100% + 12px); top: 50%;
+          transform: translateY(-50%) translateX(-6px) scale(0.92);
+          background: #1C1B1F; color: #fff;
+          font-size: 12px; font-weight: 500;
+          padding: 5px 10px; border-radius: 7px;
+          white-space: nowrap; opacity: 0; pointer-events: none;
+          transition: opacity 0.16s ease, transform 0.16s ease;
+          z-index: 200; box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+        }
+        .sidebar-btn-tooltip::before {
+          content: ''; position: absolute; left: -4px; top: 50%;
+          transform: translateY(-50%) rotate(45deg);
+          width: 8px; height: 8px; background: #1C1B1F; border-radius: 1px;
+        }
+        .admin-sidebar.collapsed .sidebar-btn:hover .sidebar-btn-tooltip {
+          opacity: 1; transform: translateY(-50%) translateX(0) scale(1);
+        }
+
+        /* ── Divider ── */
+        .sidebar-divider { height: 1px; background: #f0f0f2; margin: 0 -10px; }
+
+        /* ── Footer ── */
+        .sidebar-footer {
+          padding: 12px 10px;
+          border-top: 1px solid #f0f0f2;
+          flex-shrink: 0; overflow: hidden;
+        }
+        .sidebar-footer-inner {
+          padding: 6px 8px 6px 8px;
+          background: #f8f8fb; border-radius: 10px;
+          display: flex; align-items: center; gap: 8px;
+          transition: padding 0.38s cubic-bezier(0.4,0,0.2,1);
+        }
+        .admin-sidebar.collapsed .sidebar-footer-inner {
+          padding: 8px;
+          justify-content: center;
+          width: 52px;
+          margin: 0 auto;
+        }
+
+        /* avatar */
+        .sidebar-footer-avatar {
+          width: 28px; height: 28px; min-width: 28px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #2D86A8, #006288);
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0;
+        }
+        .sidebar-footer-avatar span { font-size: 11px; font-weight: 700; color: white; }
+
+        /* text */
+        .sidebar-footer-text {
+          flex: 1; overflow: hidden; white-space: nowrap;
+          opacity: 1; max-width: 140px; transform: translateX(0);
+          transition: opacity 0.24s cubic-bezier(0.4,0,0.2,1),
+                      transform 0.24s cubic-bezier(0.4,0,0.2,1),
+                      max-width 0.38s cubic-bezier(0.4,0,0.2,1);
+        }
+        .admin-sidebar.collapsed .sidebar-footer-text {
+          opacity: 0; transform: translateX(-8px);
+          max-width: 0; pointer-events: none;
+        }
+        .sidebar-footer-text p:first-child { font-size: 10.5px; color: #9e9ea7; margin: 0; line-height: 1.3; }
+        .sidebar-footer-text p:last-child  { font-size: 12.5px; font-weight: 600; color: #1C1B1F; margin: 0; line-height: 1.3; }
+
+        /* ── Logout button ── */
+        .sidebar-logout-btn {
+          width: 28px; height: 28px; min-width: 28px;
+          border-radius: 8px; border: none;
+          background: transparent;
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer;
+          position: relative; overflow: hidden;
+          transition: background 0.18s ease,
+                      opacity 0.24s cubic-bezier(0.4,0,0.2,1),
+                      max-width 0.38s cubic-bezier(0.4,0,0.2,1),
+                      transform 0.18s ease;
+          flex-shrink: 0;
+          opacity: 1; max-width: 28px;
+        }
+        .admin-sidebar.collapsed .sidebar-logout-btn {
+          opacity: 0; max-width: 0; pointer-events: none;
+        }
+        .sidebar-logout-btn .material-symbols-rounded {
+          font-size: 18px; color: #9292a0;
+          font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+          transition: color 0.18s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .sidebar-logout-btn:hover {
+          background: rgba(249,0,0,0.08);
+        }
+        .sidebar-logout-btn:hover .material-symbols-rounded {
+          color: #F90000;
+          transform: translateX(2px);
+        }
+        .sidebar-logout-btn:active { transform: scale(0.92); }
+
+        /* collapsed → show logout as standalone icon in footer */
+        .sidebar-footer-collapsed-logout {
+          display: none;
+          width: 100%; justify-content: center;
+        }
+        .admin-sidebar.collapsed .sidebar-footer-collapsed-logout {
+          display: flex;
+          margin-top: 8px;
+        }
+        .sidebar-footer-collapsed-logout button {
+          width: 52px; height: 40px;
+          border-radius: 10px; border: none; background: #f8f8fb;
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer;
+          transition: background 0.18s ease, transform 0.18s ease;
+        }
+        .sidebar-footer-collapsed-logout button:hover {
+          background: rgba(249,0,0,0.08);
+        }
+        .sidebar-footer-collapsed-logout button:hover .material-symbols-rounded {
+          color: #F90000;
+          transform: translateX(2px);
+        }
+        .sidebar-footer-collapsed-logout button:active { transform: scale(0.92); }
+        .sidebar-footer-collapsed-logout button .material-symbols-rounded {
+          font-size: 18px; color: #9292a0;
+          font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+          transition: color 0.18s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
+        }
+
+        /* ── Stagger-in animation on load ── */
+        @keyframes sidebar-fade-in {
+          from { opacity: 0; transform: translateX(-6px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        .sidebar-btn {
+          animation: sidebar-fade-in 0.3s cubic-bezier(0.4,0,0.2,1) both;
+        }
+      `}</style>
+
+      <aside className={`admin-sidebar${collapsed ? ' collapsed' : ''}`}>
+
+        {/* Logo / collapse toggle */}
+        <div
+          className="sidebar-logo"
+          onClick={() => setCollapsed(c => !c)}
+          role="button"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <div className="sidebar-logo-mark">
+            <span className="logo-text-iq">iQ</span>
+            <div className="logo-chevron">
+              <span className="material-symbols-rounded">chevron_left</span>
+            </div>
+          </div>
+          <div className="sidebar-logo-text">
+            <h2>iQueue</h2>
+            <p>Admin Panel</p>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <nav className="sidebar-nav">
+          {allSections.map((section, si) => (
+            <div key={section.key}>
+              {si > 0 && (
+                <div className="sidebar-divider" style={{ marginBottom: '16px', marginTop: '-8px' }} />
+              )}
+              <p className="sidebar-section-label">{section.label}</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                {section.items.map((item, idx) => {
+                  const isActive = activePage === mapLabelToPage(item.label);
+                  return (
+                    <button
+                      key={item.label}
+                      onClick={() => onPageChange(mapLabelToPage(item.label))}
+                      className={`sidebar-btn${isActive ? ' active' : ''}`}
+                      style={{ animationDelay: `${(si * 4 + idx) * 0.04}s` }}
+                    >
+                      <span className="material-symbols-rounded sidebar-btn-icon">{item.icon}</span>
+                      <span className="sidebar-btn-label">{item.label}</span>
+                      <span className="sidebar-btn-tooltip">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
+
+        {/* Footer */}
+        <div className="sidebar-footer">
+          {/* expanded state */}
+          <div className="sidebar-footer-inner">
+            <div className="sidebar-footer-avatar">
+              <span>AU</span>
+            </div>
+            <div className="sidebar-footer-text">
+              <p>Logged in as</p>
+              <p>Admin User</p>
+            </div>
+            <button
+              className="sidebar-logout-btn"
+              title="Logout"
+              aria-label="Logout"
+              onClick={() => window.location.href = '/'}
+            >
+              <span className="material-symbols-rounded">logout</span>
+            </button>
+          </div>
+
+          {/* collapsed state — logout icon only */}
+          <div className="sidebar-footer-collapsed-logout">
+            <button title="Logout" aria-label="Logout" onClick={() => window.location.href = '/'}>
+              <span className="material-symbols-rounded">logout</span>
+            </button>
+          </div>
+        </div>
+
+      </aside>
+    </>
+  );
+}
