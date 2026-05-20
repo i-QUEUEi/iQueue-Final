@@ -1,14 +1,26 @@
 import AdminHeader from '@/components/admin/AdminHeader';
+import BranchOnboardingNotice from '@/components/admin/BranchOnboardingNotice';
+import { useBranchData } from '@/lib/use-branch-data';
 
 export default function Forecast() {
+  const { hasBranchData } = useBranchData();
   const handleRefresh = () => {
     window.location.reload();
   };
 
+  if (!hasBranchData) {
+    return (
+      <>
+        <AdminHeader title="Forecast" showActions={true} onRefresh={handleRefresh} />
+        <BranchOnboardingNotice />
+      </>
+    );
+  }
+
   return (
     <>
       <AdminHeader title="Forecast" showActions={true} onRefresh={handleRefresh} />
-      <div className="flex-1 overflow-y-auto px-8 py-8 space-y-8 pb-8">
+      <div className="flex-1 overflow-y-auto hide-scrollbar px-8 py-8 space-y-8 pb-8">
         {/* Tomorrow's Forecast Summary */}
         <section>
           <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Tomorrow's Forecast</h2>

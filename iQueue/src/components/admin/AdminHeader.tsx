@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { HeaderBranchSelector } from '@/components/layout/HeaderBranchSelector';
+import { useBranchData } from '@/lib/use-branch-data';
 
 interface AdminHeaderProps {
   title: string;
@@ -9,6 +10,7 @@ interface AdminHeaderProps {
 
 export default function AdminHeader({ title, showActions = true, onRefresh }: AdminHeaderProps) {
   const [dateTime, setDateTime] = useState<string>('');
+  const { hasBranchData } = useBranchData();
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -42,9 +44,9 @@ export default function AdminHeader({ title, showActions = true, onRefresh }: Ad
         {showActions && (
           <div className="flex items-center gap-3">
             <HeaderBranchSelector />
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-50 border border-green-200">
-              <span className="inline-flex w-2 h-2 rounded-full bg-green-500"></span>
-              <span className="text-xs font-medium text-green-700">All systems operational</span>
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-lg border ${hasBranchData ? 'bg-green-50 border-green-200 text-green-700' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
+              <span className={`inline-flex w-2 h-2 rounded-full ${hasBranchData ? 'bg-green-500' : 'bg-amber-500'}`}></span>
+              <span className="text-xs font-medium">{hasBranchData ? 'Live data connected' : 'Data Integration Pending'}</span>
             </div>
             <button
               onClick={onRefresh}

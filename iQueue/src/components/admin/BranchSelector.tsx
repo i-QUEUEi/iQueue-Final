@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Building2 } from 'lucide-react';
 import { BRANCHES, getBranch } from '@/lib/branches';
 import { useBranch } from '@/lib/branch-context';
@@ -6,6 +6,7 @@ import { useBranch } from '@/lib/branch-context';
 export function BranchSelector() {
   const { selectedBranchId, setSelectedBranchId } = useBranch();
   const [isOpen, setIsOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const selectedBranch = getBranch(selectedBranchId);
 
   const handleSelect = (branchId: string) => {
@@ -13,12 +14,23 @@ export function BranchSelector() {
     setIsOpen(false);
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
-    <div className="px-4 py-4 border-b border-gray-200">
+    <div ref={wrapperRef} className="px-4 py-4 border-b border-gray-200">
       <div className="relative">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors duration-200"
+          className="w-full cursor-pointer flex items-center justify-between p-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors duration-200"
         >
           <div className="flex items-center gap-2 flex-1 text-left">
             <Building2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
@@ -33,12 +45,12 @@ export function BranchSelector() {
         </button>
 
         {isOpen && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg border border-gray-200 shadow-lg z-50 max-h-96 overflow-y-auto">
+          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg border border-gray-200 shadow-lg z-50 max-h-96 overflow-y-auto hide-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {Object.entries(BRANCHES).map(([id, branch]) => (
               <button
                 key={id}
                 onClick={() => handleSelect(id)}
-                className={`w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-blue-50 transition-colors duration-150 last:border-b-0 ${
+                className={`w-full cursor-pointer text-left px-4 py-3 border-b border-gray-100 hover:bg-blue-50 transition-colors duration-150 last:border-b-0 ${
                   selectedBranchId === id ? 'bg-blue-50' : ''
                 }`}
               >

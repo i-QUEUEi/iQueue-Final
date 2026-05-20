@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Building2 } from 'lucide-react';
-import { BRANCHES, getBranch } from '@/lib/branches';
+import { getBranch } from '@/lib/branches';
 import { useBranch } from '@/lib/branch-context';
 
 export function HeaderBranchSelector() {
-  const { selectedBranchId, setSelectedBranchId } = useBranch();
+  const { selectedBranchId, setSelectedBranchId, branches } = useBranch();
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const selectedBranch = getBranch(selectedBranchId);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const selectedBranch = branches.find((branch) => branch.id === selectedBranchId) || getBranch(selectedBranchId);
 
   const handleSelect = (branchId: string) => {
     setSelectedBranchId(branchId);
@@ -15,7 +16,18 @@ export function HeaderBranchSelector() {
     setSearchTerm('');
   };
 
-  const filteredBranches = Object.entries(BRANCHES).filter(([, branch]) => {
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredBranches = branches.filter((branch) => {
     const searchLower = searchTerm.toLowerCase();
     return (
       branch.name.toLowerCase().includes(searchLower) ||
@@ -25,10 +37,10 @@ export function HeaderBranchSelector() {
   });
 
   return (
-    <div className="relative">
+    <div ref={wrapperRef} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors duration-200"
+        className="flex cursor-pointer items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors duration-200"
       >
         <Building2 className="w-4 h-4 text-blue-600" />
         <div className="text-left hidden sm:block">
@@ -42,7 +54,6 @@ export function HeaderBranchSelector() {
 
       {isOpen && (
         <div className="absolute top-full right-0 mt-2 bg-white rounded-lg border border-gray-200 shadow-lg z-50 w-72">
-          {/* Search input */}
           <div className="p-3 border-b border-gray-100 sticky top-0 bg-white">
             <input
               type="text"
@@ -54,27 +65,26 @@ export function HeaderBranchSelector() {
             />
           </div>
 
-          {/* Branch list */}
-          <div className="max-h-96 overflow-y-auto">
+          <div className="max-h-96 overflow-y-auto hide-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {filteredBranches.length > 0 ? (
-              filteredBranches.map(([id, branch]) => (
+              filteredBranches.map((branch) => (
                 <button
-                  key={id}
-                  onClick={() => handleSelect(id)}
-                  className={`w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-blue-50 transition-colors duration-150 last:border-b-0 ${
-                    selectedBranchId === id ? 'bg-blue-50' : ''
+                  key={branch.id}
+                  onClick={() => handleSelect(branch.id)}
+                  className={`w-full cursor-pointer text-left px-4 py-3 border-b border-gray-100 hover:bg-blue-50 transition-colors duration-150 last:border-b-0 ${
+                    selectedBranchId === branch.id ? 'bg-blue-50' : ''
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     <div
                       className={`w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0 ${
-                        selectedBranchId === id ? 'bg-blue-600' : 'bg-gray-300'
+                        selectedBranchId === branch.id ? 'bg-blue-600' : 'bg-gray-300'
                       }`}
                     />
                     <div className="flex-1 min-w-0">
                       <p
                         className={`text-sm font-medium ${
-                          selectedBranchId === id ? 'text-blue-900' : 'text-gray-900'
+                          selectedBranchId === branch.id ? 'text-blue-900' : 'text-gray-900'
                         }`}
                       >
                         {branch.name}

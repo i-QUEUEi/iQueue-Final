@@ -3,7 +3,7 @@
  * Defines all government office branches and their metadata
  */
 
-export type AgencyType = 'LTO' | 'SSS' | 'PhilHealth' | 'DFA' | 'PRC' | 'BIR' | 'DTI' | 'PSA' | 'COMELEC' | 'NBI' | 'PagIBIG';
+export type AgencyType = 'LTO' | 'SSS' | 'PhilHealth' | 'DFA' | 'PRC' | 'BIR' | 'DTI' | 'PSA' | 'COMELEC' | 'NBI' | 'PagIBIG' | 'Other';
 
 export interface Branch {
   id: string;
@@ -14,9 +14,60 @@ export interface Branch {
   city: string;
   province: string;
   hasBackendData: boolean; // Only LTO CDO has live data
+  status?: 'Pending' | 'Live' | 'Offline';
+  description?: string;
   operatingHours?: string;
   contact?: string;
+  logoUrl?: string;
+  morning?: string;
+  afternoon?: string;
+  evening?: string;
+  visitors?: number;
+  windows?: string | number;
+  staff?: string | number;
+  avgWait?: string;
+  throughput?: string;
+  satisfaction?: string;
   services: string[];
+}
+
+export const BRANCH_STORAGE_KEY = 'branchesData';
+
+export function loadPersistedBranches(): Branch[] {
+  if (typeof window === 'undefined') {
+    return Object.values(BRANCHES);
+  }
+
+  try {
+    const stored = localStorage.getItem(BRANCH_STORAGE_KEY);
+    if (!stored) return Object.values(BRANCHES);
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed)) return Object.values(BRANCHES);
+    return parsed;
+  } catch {
+    return Object.values(BRANCHES);
+  }
+}
+
+function syncBranchesToStatic(branches: Branch[]) {
+  const branchMap: Record<string, Branch> = {};
+  branches.forEach((branch) => {
+    branchMap[branch.id] = branch;
+  });
+
+  Object.keys(BRANCHES).forEach((id) => {
+    if (!branchMap[id]) {
+      delete BRANCHES[id];
+    }
+  });
+
+  Object.assign(BRANCHES, branchMap);
+}
+
+export function persistBranches(branches: Branch[]) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(BRANCH_STORAGE_KEY, JSON.stringify(branches));
+  syncBranchesToStatic(branches);
 }
 
 export const BRANCHES: Record<string, Branch> = {

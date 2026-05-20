@@ -4,12 +4,12 @@
  */
 
 import { useBranch } from './branch-context';
-import { hasBackendData, getBranch } from './branches';
+import { getBranch } from './branches';
 
 export function useBranchData() {
-  const { selectedBranchId } = useBranch();
-  const branch = getBranch(selectedBranchId);
-  const hasBranchData = hasBackendData(selectedBranchId);
+  const { selectedBranchId, branches } = useBranch();
+  const branch = branches.find((item) => item.id === selectedBranchId) || getBranch(selectedBranchId);
+  const hasBranchData = branch?.hasBackendData ?? false;
 
   return {
     selectedBranchId,

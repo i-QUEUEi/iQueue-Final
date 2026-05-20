@@ -1,9 +1,23 @@
 import AdminHeader from '@/components/admin/AdminHeader';
+import BranchOnboardingNotice from '@/components/admin/BranchOnboardingNotice';
+import { useBranchData } from '@/lib/use-branch-data';
 
 export default function Reports() {
+  const { hasBranchData, isLTOCDO } = useBranchData();
+  const showLiveReports = hasBranchData && isLTOCDO;
+
   const handleRefresh = () => {
     window.location.reload();
   };
+
+  if (!showLiveReports) {
+    return (
+      <>
+        <AdminHeader title="Reports" showActions={true} onRefresh={handleRefresh} />
+        <BranchOnboardingNotice />
+      </>
+    );
+  }
 
   return (
     <>

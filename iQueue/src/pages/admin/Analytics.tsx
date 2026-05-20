@@ -1,15 +1,27 @@
 import AdminHeader from '@/components/admin/AdminHeader';
+import BranchOnboardingNotice from '@/components/admin/BranchOnboardingNotice';
+import { useBranchData } from '@/lib/use-branch-data';
 
 export default function Analytics() {
+  const { hasBranchData } = useBranchData();
   const handleRefresh = () => {
     window.location.reload();
   };
+
+  if (!hasBranchData) {
+    return (
+      <>
+        <AdminHeader title="Analytics" showActions={true} onRefresh={handleRefresh} />
+        <BranchOnboardingNotice />
+      </>
+    );
+  }
 
   return (
     <>
       <AdminHeader title="Analytics" showActions={true} onRefresh={handleRefresh} />
       <div className="border-b border-gray-200" />
-      <div className="flex-1 overflow-y-auto px-8 py-8 space-y-8 pb-8" style={{ fontFamily: "'Product Sans', 'Google Sans', sans-serif" }}>
+      <div className="flex-1 overflow-y-auto hide-scrollbar px-8 py-8 space-y-8 pb-8" style={{ fontFamily: "'Product Sans', 'Google Sans', sans-serif" }}>
         {/* Operation Analytics Summary */}
         <section>
           <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Operation Analytics</h2>
