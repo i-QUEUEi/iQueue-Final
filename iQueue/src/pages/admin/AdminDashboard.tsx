@@ -2,6 +2,8 @@ import { useState } from 'react';
 import AdminHeader from '@/components/admin/AdminHeader';
 import BranchOnboardingNotice from '@/components/admin/BranchOnboardingNotice';
 import { useBranchData } from '@/lib/use-branch-data';
+import WeeklyForecastSection from '@/components/admin/WeeklyForecastSection';
+import WaitingTimeHeatmap from '@/components/admin/waiting_time_heatmap';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -55,6 +57,9 @@ export default function AdminDashboard() {
           </div>
         </section>
 
+        <WeeklyForecastSection />
+        <WaitingTimeHeatmap />
+
         {/* ANALYTICS PREVIEW */}
         <section>
           <div className="rounded-2xl border border-blue-200 bg-white shadow-sm p-6">
@@ -82,9 +87,9 @@ export default function AdminDashboard() {
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Today's Peak Hours</h3>
               <div className="space-y-3">
                 {[
-                  { hour: '9–10 AM', visitors: 247, status: 'Moderate' },
-                  { hour: '10–11 AM', visitors: 312, status: 'High' },
-                  { hour: '2–3 PM', visitors: 289, status: 'High' }
+                  { hour: '9-10 AM', visitors: 247, status: 'Moderate' },
+                  { hour: '10-11 AM', visitors: 312, status: 'High' },
+                  { hour: '2-3 PM', visitors: 289, status: 'High' }
                 ].map((peak, idx) => (
                   <div key={idx} className="p-4 rounded-lg bg-gradient-to-r from-yellow-50 to-orange-100 border border-orange-300">
                     <div className="flex justify-between items-center mb-2">

@@ -1,3 +1,9 @@
+import {
+  fetchHistoricalAnalytics,
+  fetchModelPerformance,
+  fetchPredictiveAnalytics,
+} from '@/lib/api';
+
 export interface AnalyticsData {
   performanceMetrics: Array<{
     model: string;
@@ -29,21 +35,21 @@ export interface HistoricalAnalyticsData {
 
 export interface PredictiveAnalyticsData {
   morning: {
-    waitTime: number;
+    waitTime: string;
     confidence: number;
     congestion: string;
     recommendation: string;
     color: string;
   };
   afternoon: {
-    waitTime: number;
+    waitTime: string;
     confidence: number;
     congestion: string;
     recommendation: string;
     color: string;
   };
   evening: {
-    waitTime: number;
+    waitTime: string;
     confidence: number;
     congestion: string;
     recommendation: string;
@@ -53,83 +59,23 @@ export interface PredictiveAnalyticsData {
 
 export const analyticsService = {
   getModelPerformance: async (): Promise<AnalyticsData> => {
-    return {
-      performanceMetrics: [
-        {
-          model: 'LSTM Model',
-          mae: 2.4,
-          maeUnit: 'min',
-          accuracy: '94.2%',
-          status: 'Excellent',
-          color: 'from-blue-500 to-blue-600'
-        },
-        {
-          model: 'XGBoost Model',
-          mae: 2.1,
-          maeUnit: 'min',
-          accuracy: '95.8%',
-          status: 'Excellent',
-          color: 'from-purple-500 to-purple-600'
-        },
-        {
-          model: 'Ensemble Model',
-          mae: 1.9,
-          maeUnit: 'min',
-          accuracy: '96.5%',
-          status: 'Outstanding',
-          color: 'from-green-500 to-green-600'
-        }
-      ],
-      comparisonData: [
-        { model: 'LSTM', mae: '2.4', rmse: '3.2', r2: '0.94' },
-        { model: 'XGBoost', mae: '2.1', rmse: '2.8', r2: '0.96' },
-        { model: 'Ensemble', mae: '1.9', rmse: '2.5', r2: '0.97' }
-      ]
-    };
+    return fetchModelPerformance();
   },
 
   getHistoricalAnalytics: async (): Promise<HistoricalAnalyticsData> => {
+    const data = await fetchHistoricalAnalytics();
     return {
-      insights: [
-        { title: 'Peak Days', desc: 'Fridays and Tuesdays see 22% higher traffic', value: '1,450 avg' },
-        { title: 'Off-Peak Days', desc: 'Sundays and Mondays see minimal traffic', value: '650 avg' },
-        { title: 'Peak Hours', desc: '9-11 AM and 2-3 PM account for 45% of daily traffic', value: 'Two peaks' }
-      ],
-      dailyData: [
-        { day: 'Mon', avgWait: 15 },
-        { day: 'Tue', avgWait: 18 },
-        { day: 'Wed', avgWait: 16 },
-        { day: 'Thu', avgWait: 17 },
-        { day: 'Fri', avgWait: 22 },
-        { day: 'Sat', avgWait: 12 },
-        { day: 'Sun', avgWait: 10 }
-      ]
+      insights: data.insights,
+      dailyData: data.dailyData,
     };
   },
 
   getPredictiveAnalytics: async (): Promise<PredictiveAnalyticsData> => {
+    const data = await fetchPredictiveAnalytics();
     return {
-      morning: {
-        waitTime: 12,
-        confidence: 89,
-        congestion: 'Low',
-        recommendation: 'Best time to visit',
-        color: 'from-green-400 to-green-500'
-      },
-      afternoon: {
-        waitTime: 22,
-        confidence: 92,
-        congestion: 'High',
-        recommendation: 'Expect longer wait',
-        color: 'from-red-400 to-red-500'
-      },
-      evening: {
-        waitTime: 18,
-        confidence: 85,
-        congestion: 'Medium',
-        recommendation: 'Moderate wait times',
-        color: 'from-yellow-400 to-yellow-500'
-      }
+      morning: data.predictions.morning,
+      afternoon: data.predictions.afternoon,
+      evening: data.predictions.evening,
     };
   }
 };
@@ -167,21 +113,21 @@ export const mockDataService = {
   getPredictiveAnalyticsData: (): PredictiveAnalyticsData => {
     return {
       morning: {
-        waitTime: 12,
+        waitTime: '12-18',
         confidence: 89,
         congestion: 'Low',
         recommendation: 'Best time to visit',
         color: 'from-green-400 to-green-500'
       },
       afternoon: {
-        waitTime: 22,
+        waitTime: '22-31',
         confidence: 92,
         congestion: 'High',
         recommendation: 'Expect longer wait',
         color: 'from-red-400 to-red-500'
       },
       evening: {
-        waitTime: 18,
+        waitTime: '18-24',
         confidence: 85,
         congestion: 'Medium',
         recommendation: 'Moderate wait times',
