@@ -121,10 +121,21 @@ export type DatasetSummaryResponse = {
   busiestDay: number;
 };
 
-async function fetchJson<T>(path: string): Promise<T> {
+export type Announcement = {
+  id: string;
+  title: string;
+  content: string;
+  date: string;
+  branchId?: string | null;
+  priority: 'Advisory' | 'Maintenance' | 'Alert' | 'Other';
+  attachmentName?: string | null;
+  attachmentUrl?: string | null;
+};
+
+async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path.startsWith('/api/')
     ? `${SERVICE_BASE_URL}${path}`
-    : `${SERVICE_BASE_URL}${path}`);
+    : `${SERVICE_BASE_URL}${path}`, init);
 
   if (!response.ok) {
     throw new Error(`API request failed (${response.status})`);
@@ -163,4 +174,30 @@ export function fetchDatasetSummary() {
 
 export function fetchWeeklyForecast(date: string) {
   return fetchJson<WeeklyForecastResponse>(`/api/weekly-forecast?date=${encodeURIComponent(date)}`);
+}
+
+export function fetchAnnouncements() {
+  return fetchJson<{ announcements: Announcement[] }>('/api/announcements');
+}
+
+export function createAnnouncement(payload: Omit<Announcement, 'id'> & { id?: string }) {
+  return fetchJson<Announcement>('/api/announcements', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateAnnouncement(id: string, payload: Omit<Announcement, 'id'>) {
+  return fetchJson<Announcement>(`/api/announcements/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteAnnouncement(id: string) {
+  return fetchJson<{ deleted: boolean; id: string }>(`/api/announcements/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
 }

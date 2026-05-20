@@ -2,43 +2,55 @@ import { useEffect, useMemo, useState } from 'react';
 import AdminHeader from '@/components/admin/AdminHeader';
 import AnnouncementModal from '@/components/admin/AnnouncementModal';
 import { useBranch } from '@/lib/branch-context';
+import {
+  createAnnouncement,
+  deleteAnnouncement,
+  fetchAnnouncements,
+  updateAnnouncement,
+  type Announcement,
+} from '@/lib/api';
 
 const PRIORITY_TYPES = ['Advisory', 'Maintenance', 'Alert'] as const;
 
 type PriorityType = (typeof PRIORITY_TYPES)[number];
-
-type Announcement = {
-  id: string;
-  title: string;
-  content: string;
-  date: string;
-  branchId?: string;
-  priority: PriorityType | 'Other';
-  attachmentName?: string;
-  attachmentUrl?: string;
-};
 
 export default function Announcements() {
   const { branches } = useBranch();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem('announcements');
-    if (stored) {
+    let cancelled = false;
+
+    async function loadAnnouncements() {
+      setLoading(true);
+      setError(null);
+
       try {
-        setAnnouncements(JSON.parse(stored));
-      } catch {
-        setAnnouncements([]);
+        const response = await fetchAnnouncements();
+        if (!cancelled) {
+          setAnnouncements(response.announcements);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load announcements.');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
-  }, []);
 
-  const saveAnnouncements = (next: Announcement[]) => {
-    setAnnouncements(next);
-    localStorage.setItem('announcements', JSON.stringify(next));
-  };
+    loadAnnouncements();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleOpenNewAnnouncement = () => {
     setEditingAnnouncement(null);
@@ -50,15 +62,44 @@ export default function Announcements() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteAnnouncement = (id: string) => {
-    saveAnnouncements(announcements.filter((item) => item.id !== id));
+  const handleDeleteAnnouncement = async (id: string) => {
+    try {
+      await deleteAnnouncement(id);
+      setAnnouncements((current) => current.filter((item) => item.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete announcement.');
+    }
   };
 
-  const handleSaveAnnouncement = (announcement: Announcement) => {
-    const next = announcements.filter((item) => item.id !== announcement.id);
-    saveAnnouncements([announcement, ...next]);
-    setIsModalOpen(false);
-    setEditingAnnouncement(null);
+  const handleSaveAnnouncement = async (announcement: Announcement) => {
+    try {
+      const saved = announcement.id
+        ? await updateAnnouncement(announcement.id, {
+            title: announcement.title,
+            content: announcement.content,
+            date: announcement.date,
+            branchId: announcement.branchId,
+            priority: announcement.priority,
+            attachmentName: announcement.attachmentName,
+            attachmentUrl: announcement.attachmentUrl,
+          })
+        : await createAnnouncement({
+            title: announcement.title,
+            content: announcement.content,
+            date: announcement.date,
+            branchId: announcement.branchId,
+            priority: announcement.priority,
+            attachmentName: announcement.attachmentName,
+            attachmentUrl: announcement.attachmentUrl,
+          });
+
+      setAnnouncements((current) => [saved, ...current.filter((item) => item.id !== saved.id)]);
+      setIsModalOpen(false);
+      setEditingAnnouncement(null);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save announcement.');
+    }
   };
 
   const grouped = useMemo(() => {
@@ -89,6 +130,12 @@ export default function Announcements() {
       <AdminHeader title="Announcements" showActions={true} onRefresh={() => window.location.reload()} />
 
       <div className="flex-1 overflow-y-auto hide-scrollbar px-8 py-8 space-y-8 pb-8">
+        {error ? (
+          <section className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {error}
+          </section>
+        ) : null}
+
         <section>
           <button onClick={handleOpenNewAnnouncement} className="w-full rounded-2xl border-2 border-dashed border-purple-400 bg-purple-50 hover:bg-purple-100 transition-colors duration-200 py-8 flex flex-col items-center justify-center gap-2 cursor-pointer">
             <p className="text-2xl text-purple-600">+</p>
@@ -119,7 +166,13 @@ export default function Announcements() {
           </div>
         </section>
 
-        {(['Advisory', 'Maintenance', 'Alert', 'Other'] as const).map((type) => (
+        {loading ? (
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
+            Loading announcements...
+          </section>
+        ) : null}
+
+        {!loading && (['Advisory', 'Maintenance', 'Alert', 'Other'] as const).map((type) => (
           <section key={type}>
             <div className={`rounded-2xl border ${
               type === 'Advisory' ? 'border-blue-200 bg-blue-50' :
@@ -167,13 +220,13 @@ export default function Announcements() {
         ))}
       </div>
 
-      <AnnouncementModal
+        <AnnouncementModal
         open={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
           setEditingAnnouncement(null);
         }}
-        onSave={(announcement) => handleSaveAnnouncement({ ...announcement, id: announcement.id || Date.now().toString() })}
+        onSave={handleSaveAnnouncement}
         initial={editingAnnouncement || undefined}
       />
     </>
