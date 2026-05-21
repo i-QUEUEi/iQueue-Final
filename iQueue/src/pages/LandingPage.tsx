@@ -1,153 +1,740 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, BarChart3, Users, Clock, Shield } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import { useBranch } from '@/lib/branch-context';
+import {
+  addVisitorFeedback,
+  addVisitorRequest,
+  loadVisitorFeedback,
+  loadVisitorRequests,
+} from '@/lib/visitor-storage';
+import type { VisitorFeedback, VisitorRequest } from '@/lib/visitor-storage';
+import {
+  fetchAnnouncements,
+  fetchDatasetSummary,
+  fetchHistoricalAnalytics,
+  fetchPredictiveAnalytics,
+  type Announcement,
+  type DatasetSummaryResponse,
+  type HistoricalAnalyticsResponse,
+  type PredictiveAnalyticsResponse,
+} from '@/lib/api';
+import { HeaderBranchSelector } from '@/components/layout/HeaderBranchSelector';
+import WordmarkRed from '@/assets/WordmarkRed.png';
+import WordmarkBlue from '@/assets/WordmarkBlue.png';
+import HeroSection from '@/components/enduser/HeroSection';
+import WeeklyForecastSection from '@/components/admin/WeeklyForecastSection';
+
+const WAIT_TIME_OPTIONS = [
+  'Less than 15 minutes',
+  '15 - 30 minutes',
+  '30 - 60 minutes',
+  '1 - 2 hours',
+  'More than 2 hours',
+];
+
+const CROWD_OPTIONS = ['Light', 'Moderate', 'Busy', 'Very busy'];
+const PREDICTION_MATCH_OPTIONS = ['Yes', 'Partially', 'No'];
+
+function mapWaitTimeToMinutes(value: string) {
+  switch (value) {
+    case 'Less than 15 minutes':
+      return 12;
+    case '15 - 30 minutes':
+      return 22;
+    case '30 - 60 minutes':
+      return 45;
+    case '1 - 2 hours':
+      return 75;
+    case 'More than 2 hours':
+      return 120;
+    default:
+      return 25;
+  }
+}
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const { branches, selectedBranchId } = useBranch();
+  const [visitModalOpen, setVisitModalOpen] = useState(false);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [visitorRequests, setVisitorRequests] = useState<VisitorRequest[]>([]);
+  const [visitorFeedback, setVisitorFeedback] = useState<VisitorFeedback[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [announcementLoading, setAnnouncementLoading] = useState(true);
+  const [announcementError, setAnnouncementError] = useState<string | null>(null);
+  const [datasetSummary, setDatasetSummary] = useState<DatasetSummaryResponse | null>(null);
+  const [historicalAnalytics, setHistoricalAnalytics] = useState<HistoricalAnalyticsResponse | null>(null);
+  const [predictiveAnalytics, setPredictiveAnalytics] = useState<PredictiveAnalyticsResponse | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [statusMessage, setStatusMessage] = useState('');
+  const [heroVisible, setHeroVisible] = useState(false);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const [dateTime, setDateTime] = useState('');
+  const [visitForm, setVisitForm] = useState({
+    name: '',
+    office: '',
+    branchId: '',
+    service: '',
+    visitDate: '',
+    visitTime: '',
+    contact: '',
+    notes: '',
+  });
+  const [feedbackForm, setFeedbackForm] = useState({
+    office: '',
+    branchId: '',
+    date: '',
+    time: '',
+    waitTime: WAIT_TIME_OPTIONS[1],
+    crowdLevel: CROWD_OPTIONS[1],
+    systemIssue: 'No',
+    waitingCount: '0 - 10',
+    predictionMatch: PREDICTION_MATCH_OPTIONS[0],
+    comments: '',
+  });
+
+  useEffect(() => {
+    setVisitorRequests(loadVisitorRequests());
+    setVisitorFeedback(loadVisitorFeedback());
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setHeroVisible(true), 80);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const updateDateTime = () => {
+      const now = new Date();
+      setDateTime(
+        `${now.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })} • ${now.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })}`
+      );
+    };
+
+    updateDateTime();
+    const timer = window.setInterval(updateDateTime, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAnalytics() {
+      setAnnouncementLoading(true);
+      setAnalyticsLoading(true);
+      setAnnouncementError(null);
+
+      try {
+        const [announcementResponse, datasetResponse, historicalResponse, predictiveResponse] = await Promise.all([
+          fetchAnnouncements(),
+          fetchDatasetSummary(),
+          fetchHistoricalAnalytics(),
+          fetchPredictiveAnalytics(),
+        ]);
+
+        if (!cancelled) {
+          setAnnouncements(announcementResponse.announcements);
+          setDatasetSummary(datasetResponse);
+          setHistoricalAnalytics(historicalResponse);
+          setPredictiveAnalytics(predictiveResponse);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setAnnouncementError(err instanceof Error ? err.message : 'Failed to load analytics.');
+        }
+      } finally {
+        if (!cancelled) {
+          setAnnouncementLoading(false);
+          setAnalyticsLoading(false);
+        }
+      }
+    }
+
+    loadAnalytics();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!branches.length) return;
+    const defaultBranch = branches[0];
+
+    if (!visitForm.branchId) {
+      setVisitForm((current) => ({
+        ...current,
+        branchId: defaultBranch.id,
+        service: current.service || defaultBranch.services[0] || '',
+      }));
+    }
+
+    if (!feedbackForm.branchId) {
+      setFeedbackForm((current) => ({
+        ...current,
+        branchId: defaultBranch.id,
+      }));
+    }
+  }, [branches, visitForm.branchId, feedbackForm.branchId]);
+
+  useEffect(() => {
+    if (!statusMessage) return;
+    const timer = window.setTimeout(() => setStatusMessage(''), 5000);
+    return () => window.clearTimeout(timer);
+  }, [statusMessage]);
+
+  const confirmedVisits = visitorRequests.filter((request) => request.status === 'confirmed').length;
+  const averageWait = useMemo(() => {
+    if (!visitorFeedback.length) return 25;
+    const total = visitorFeedback.reduce((sum, feedback) => sum + mapWaitTimeToMinutes(feedback.waitTime), 0);
+    return Math.round(total / visitorFeedback.length);
+  }, [visitorFeedback]);
+
+  const averageHistoricalWait = useMemo(() => {
+    const values = historicalAnalytics?.dailyData?.map((item) => item.avgWait) ?? [];
+    if (!values.length) return averageWait;
+    return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+  }, [averageWait, historicalAnalytics]);
+
+  const totalVisitors = datasetSummary?.totalRecords ?? (branches.reduce((sum, branch) => sum + (branch.visitors || 0), 0) || 1247);
+  const currentCongestion = analyticsLoading ? 'Moderate' : (predictiveAnalytics?.predictions?.afternoon?.congestion ?? 'Moderate');
+  const avgWaitValue = analyticsLoading ? 18 : (datasetSummary?.averageWaitTime ?? averageHistoricalWait);
+
+  const selectedVisitBranch = branches.find((branch) => branch.id === visitForm.branchId) || branches[0];
+  const serviceOptions = selectedVisitBranch?.services || [];
+
+  const branchById = useMemo(() => {
+    return branches.reduce<Record<string, string>>((acc, branch) => {
+      acc[branch.id] = branch.name;
+      return acc;
+    }, {});
+  }, [branches]);
+
+  const selectedBranch = branches.find((branch) => branch.id === selectedBranchId) || branches[0];
+
+  const groupedAnnouncements = useMemo(() => {
+    return announcements.reduce<Record<'Advisory' | 'Maintenance' | 'Alert' | 'Other', Announcement[]>>((acc, announcement) => {
+      const key = announcement.priority;
+      acc[key] = acc[key] || [];
+      acc[key].push(announcement);
+      return acc;
+    }, { Advisory: [], Maintenance: [], Alert: [], Other: [] });
+  }, [announcements]);
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  const resetVisitForm = () => {
+    setVisitForm((current) => ({
+      ...current,
+      name: '',
+      office: '',
+      visitDate: '',
+      visitTime: '',
+      contact: '',
+      notes: '',
+    }));
+  };
+
+  const resetFeedbackForm = () => {
+    setFeedbackForm((current) => ({
+      ...current,
+      office: '',
+      date: '',
+      time: '',
+      comments: '',
+    }));
+  };
+
+  const handleVisitSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (
+      !visitForm.name ||
+      !visitForm.office ||
+      !visitForm.branchId ||
+      !visitForm.service ||
+      !visitForm.visitDate ||
+      !visitForm.visitTime
+    ) {
+      setStatusMessage('Please complete all required fields for your visit request.');
+      return;
+    }
+
+    const branch = branches.find((item) => item.id === visitForm.branchId);
+    const newRequest: VisitorRequest = {
+      id: `visit-${Date.now()}`,
+      name: visitForm.name,
+      office: visitForm.office,
+      branchId: visitForm.branchId,
+      branchName: branch?.name || 'Selected Branch',
+      service: visitForm.service,
+      visitDate: visitForm.visitDate,
+      visitTime: visitForm.visitTime,
+      contact: visitForm.contact,
+      notes: visitForm.notes,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    };
+
+    addVisitorRequest(newRequest);
+    setVisitorRequests((current) => [newRequest, ...current]);
+    setVisitModalOpen(false);
+    setStatusMessage('Your visit request was submitted. Admin can now review it.');
+    resetVisitForm();
+  };
+
+  const handleFeedbackSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!feedbackForm.office || !feedbackForm.branchId || !feedbackForm.date || !feedbackForm.time) {
+      setStatusMessage('Please complete the required feedback fields before submitting.');
+      return;
+    }
+
+    const branch = branches.find((item) => item.id === feedbackForm.branchId);
+    const newFeedback: VisitorFeedback = {
+      id: `feedback-${Date.now()}`,
+      office: feedbackForm.office,
+      branchId: feedbackForm.branchId,
+      branchName: branch?.name || 'Selected Branch',
+      date: feedbackForm.date,
+      time: feedbackForm.time,
+      waitTime: feedbackForm.waitTime,
+      crowdLevel: feedbackForm.crowdLevel,
+      systemIssue: feedbackForm.systemIssue,
+      waitingCount: feedbackForm.waitingCount,
+      predictionMatch: feedbackForm.predictionMatch,
+      comments: feedbackForm.comments,
+      submittedAt: new Date().toISOString(),
+    };
+
+    addVisitorFeedback(newFeedback);
+    setVisitorFeedback((current) => [newFeedback, ...current]);
+    setFeedbackModalOpen(false);
+    setStatusMessage('Thank you! Your feedback has been recorded.');
+    resetFeedbackForm();
+  };
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: "'Product Sans', 'Google Sans', sans-serif" }}>
-      {/* Navigation */}
-      <nav className="flex justify-between items-center px-8 py-4 border-b border-gray-200">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center text-white font-bold">
-            iQ
-          </div>
-          <span className="text-xl font-semibold text-gray-900">iQueue</span>
-        </div>
-        
-        <button
-          onClick={() => navigate('/admin')}
-          className="px-6 py-2 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium transition-all duration-200 shadow-md hover:shadow-lg"
-        >
-          Admin Dashboard
-        </button>
-      </nav>
-
-      {/* Hero Section */}
-      <section className="px-8 py-20 flex flex-col items-center text-center max-w-4xl mx-auto">
-        <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-          Smart Queue Management for Modern Services
-        </h1>
-        <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-          iQueue streamlines visitor management with real-time analytics, predictive forecasting, 
-          and intelligent queue optimization. Reduce wait times and improve service delivery.
-        </p>
-        
-        <button
-          onClick={() => navigate('/admin')}
-          className="inline-flex items-center gap-2 px-8 py-4 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
-        >
-          Get Started <ArrowRight className="w-5 h-5" />
-        </button>
-      </section>
-
-      {/* Features Section */}
-      <section className="px-8 py-16 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
-            Powerful Features
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Feature 1 */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 hover:shadow-lg transition-all duration-300">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-4">
-                <BarChart3 className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Real-time Analytics</h3>
-              <p className="text-sm text-gray-600">
-                Monitor visitor flow, wait times, and service metrics in real-time dashboards.
-              </p>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 hover:shadow-lg transition-all duration-300">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center mb-4">
-                <Clock className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Predictive Forecasting</h3>
-              <p className="text-sm text-gray-600">
-                AI-powered predictions help you plan staffing and resources ahead of time.
-              </p>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 hover:shadow-lg transition-all duration-300">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-teal-500 flex items-center justify-center mb-4">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Visitor Management</h3>
-              <p className="text-sm text-gray-600">
-                Pre-registration, check-in, and arrival tracking for seamless visitor experience.
-              </p>
-            </div>
-
-            {/* Feature 4 */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 hover:shadow-lg transition-all duration-300">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center mb-4">
-                <Shield className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Secure & Reliable</h3>
-              <p className="text-sm text-gray-600">
-                Enterprise-grade security with 99.8% uptime SLA for mission-critical operations.
-              </p>
+    <div className="min-h-screen bg-slate-50 text-slate-900" style={{ fontFamily: "'Product Sans', 'Google Sans', sans-serif" }}>
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+          <div className="flex items-center gap-3">
+            <img src={WordmarkRed} alt="iQueue" className="h-6 w-auto" />
+            <div className="hidden md:block">
+              <p className="text-xs text-slate-500">{dateTime}</p>
+              <p className="text-xs font-medium text-slate-700">{selectedBranch?.name || 'Selected Branch'}</p>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Stats Section */}
-      <section className="px-8 py-16">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div>
-              <p className="text-4xl font-bold text-gray-900 mb-2">50+</p>
-              <p className="text-gray-600">Government Agencies</p>
-            </div>
-            <div>
-              <p className="text-4xl font-bold text-gray-900 mb-2">500K+</p>
-              <p className="text-gray-600">Daily Visitors Served</p>
-            </div>
-            <div>
-              <p className="text-4xl font-bold text-gray-900 mb-2">45%</p>
-              <p className="text-gray-600">Avg Wait Time Reduction</p>
-            </div>
+          <div className="flex items-center gap-3">
+            <HeaderBranchSelector />
+            <button
+              onClick={() => navigate('/admin')}
+              className="rounded-full bg-gradient-to-r from-red-600 to-rose-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:from-red-700 hover:to-rose-700"
+            >
+              Admin
+            </button>
           </div>
         </div>
-      </section>
+      </header>
 
-      {/* CTA Section */}
-      <section className="px-8 py-16 bg-gradient-to-r from-red-50 to-orange-50">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Ready to Transform Your Queue Management?
-          </h2>
-          <p className="text-gray-600 mb-8">
-            Start optimizing your visitor flow today with iQueue's intelligent management system.
-          </p>
-          
-          <button
-            onClick={() => navigate('/admin')}
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
-          >
-            Access Admin Dashboard <ArrowRight className="w-5 h-5" />
-          </button>
-        </div>
-      </section>
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-10">
+        <HeroSection
+          totalVisitors={totalVisitors}
+          currentCongestion={currentCongestion}
+          averageWait={avgWaitValue}
+          confirmedVisits={analyticsLoading ? 342 : confirmedVisits}
+          heroVisible={heroVisible}
+          heroRef={heroRef}
+          setVisitModalOpen={setVisitModalOpen}
+          setFeedbackModalOpen={setFeedbackModalOpen}
+        />
 
-      {/* Footer */}
-      <footer className="px-8 py-8 border-t border-gray-200 bg-white">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <p className="text-sm text-gray-600">
-            © 2026 iQueue. All rights reserved.
-          </p>
-          <div className="flex gap-6">
-            <a href="#" className="text-sm text-gray-600 hover:text-gray-900">About</a>
-            <a href="#" className="text-sm text-gray-600 hover:text-gray-900">Privacy</a>
-            <a href="#" className="text-sm text-gray-600 hover:text-gray-900">Contact</a>
+        <section className="mt-12">
+          <h2 className="text-center text-3xl font-bold text-slate-950">Announcements</h2>
+
+          {announcementError ? (
+            <div className="mt-6 rounded-3xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700">
+              {announcementError}
+            </div>
+          ) : null}
+
+          {announcementLoading ? (
+            <div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
+              Loading announcements…
+            </div>
+          ) : (
+            <div className="mt-8 space-y-6">
+              {(['Advisory', 'Maintenance', 'Alert', 'Other'] as const).map((priority) => {
+                const categoryAnnouncements = groupedAnnouncements[priority];
+                const sectionTone =
+                  priority === 'Advisory' ? 'border-sky-200 bg-sky-50'
+                  : priority === 'Maintenance' ? 'border-purple-200 bg-purple-50'
+                  : priority === 'Alert' ? 'border-rose-200 bg-rose-50'
+                  : 'border-slate-200 bg-white';
+
+                return (
+                  <section key={priority} className={`rounded-[1.75rem] border p-4 sm:p-6 ${sectionTone}`}>
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-slate-900">{priority} Announcements</h3>
+                        <p className="text-sm text-slate-600">{categoryAnnouncements.length} announcement{categoryAnnouncements.length === 1 ? '' : 's'} in this category.</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 space-y-4">
+                      {categoryAnnouncements.length ? (
+                        categoryAnnouncements.map((announcement) => (
+                          <div key={announcement.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <h4 className="font-semibold text-slate-900">{announcement.title}</h4>
+                                <p className="mt-1 text-xs text-slate-500">{announcement.date}</p>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                <span className="rounded-full bg-slate-100 px-2 py-1">{announcement.priority}</span>
+                                <span>{branchById[String(announcement.branchId)] || 'All branches'}</span>
+                              </div>
+                            </div>
+                            <p className="mt-3 text-sm leading-6 text-slate-600">{announcement.content}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
+                          No announcements available in this category.
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        <section className="mt-12">
+          <h2 className="text-center text-3xl font-bold text-slate-950">Weekly Forecast</h2>
+          <div className="mt-6">
+            <WeeklyForecastSection />
           </div>
+        </section>
+      </main>
+
+      <footer className="mt-12 bg-orange-400 py-12 text-center text-white">
+        <div className="mx-auto flex max-w-7xl items-center justify-center gap-3 px-6">
+          <img src={WordmarkBlue} alt="iQueue" className="h-8 w-auto" />
+          <span className="text-2xl font-semibold">Footer</span>
         </div>
       </footer>
+
+      {/* ── Visit Modal ── */}
+      {visitModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-3xl rounded-[2rem] bg-white p-8 shadow-2xl">
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm uppercase tracking-[0.24em] text-rose-600">Visit request</p>
+                <h2 className="mt-2 text-3xl font-semibold text-slate-950">Will you visit today?</h2>
+              </div>
+              <button
+                onClick={() => setVisitModalOpen(false)}
+                className="rounded-full bg-slate-100 px-4 py-2 text-slate-700 transition hover:bg-slate-200"
+              >
+                Close
+              </button>
+            </div>
+
+            <form className="space-y-6" onSubmit={handleVisitSubmit}>
+              <div className="grid gap-6 md:grid-cols-2">
+                <label className="space-y-2 text-sm text-slate-700">
+                  Full name
+                  <input
+                    value={visitForm.name}
+                    onChange={(event) => setVisitForm((current) => ({ ...current, name: event.target.value }))}
+                    className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
+                    placeholder="Juan Dela Cruz"
+                    required
+                  />
+                </label>
+
+                <label className="space-y-2 text-sm text-slate-700">
+                  Office / service
+                  <input
+                    value={visitForm.office}
+                    onChange={(event) => setVisitForm((current) => ({ ...current, office: event.target.value }))}
+                    className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
+                    placeholder="LTO Service Counter"
+                    required
+                  />
+                </label>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <label className="space-y-2 text-sm text-slate-700">
+                  Branch / location
+                  <select
+                    value={visitForm.branchId}
+                    onChange={(event) => {
+                      const branchId = event.target.value;
+                      const branch = branches.find((item) => item.id === branchId);
+                      setVisitForm((current) => ({
+                        ...current,
+                        branchId,
+                        service: branch?.services?.[0] || current.service,
+                      }));
+                    }}
+                    className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
+                    required
+                  >
+                    {branches.map((branch) => (
+                      <option key={branch.id} value={branch.id}>{branch.name}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="space-y-2 text-sm text-slate-700">
+                  Service type
+                  <select
+                    value={visitForm.service}
+                    onChange={(event) => setVisitForm((current) => ({ ...current, service: event.target.value }))}
+                    className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
+                    required
+                  >
+                    {serviceOptions.length ? (
+                      serviceOptions.map((service) => (
+                        <option key={service} value={service}>{service}</option>
+                      ))
+                    ) : (
+                      <option value="">Select a service</option>
+                    )}
+                  </select>
+                </label>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <label className="space-y-2 text-sm text-slate-700">
+                  Visit date
+                  <input
+                    type="date"
+                    min={today}
+                    value={visitForm.visitDate}
+                    onChange={(event) => setVisitForm((current) => ({ ...current, visitDate: event.target.value }))}
+                    className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
+                    required
+                  />
+                </label>
+
+                <label className="space-y-2 text-sm text-slate-700">
+                  Visit time
+                  <input
+                    type="time"
+                    value={visitForm.visitTime}
+                    onChange={(event) => setVisitForm((current) => ({ ...current, visitTime: event.target.value }))}
+                    className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
+                    required
+                  />
+                </label>
+              </div>
+
+              <label className="space-y-2 text-sm text-slate-700">
+                Contact details
+                <input
+                  value={visitForm.contact}
+                  onChange={(event) => setVisitForm((current) => ({ ...current, contact: event.target.value }))}
+                  className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
+                  placeholder="Email or phone (optional)"
+                />
+              </label>
+
+              <label className="space-y-2 text-sm text-slate-700">
+                Notes for admin
+                <textarea
+                  value={visitForm.notes}
+                  onChange={(event) => setVisitForm((current) => ({ ...current, notes: event.target.value }))}
+                  className="min-h-[120px] w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
+                  placeholder="Optional details about your request"
+                />
+              </label>
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-slate-500">Your request is saved locally and visible in the admin visits dashboard.</p>
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-2 rounded-3xl bg-rose-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:bg-rose-700"
+                >
+                  Submit request
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
+
+      {/* ── Feedback Modal ── */}
+      {feedbackModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-3xl rounded-[2rem] bg-white p-8 shadow-2xl">
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm uppercase tracking-[0.24em] text-sky-600">Visitor feedback</p>
+                <h2 className="mt-2 text-3xl font-semibold text-slate-950">Share your queue experience</h2>
+              </div>
+              <button
+                onClick={() => setFeedbackModalOpen(false)}
+                className="rounded-full bg-slate-100 px-4 py-2 text-slate-700 transition hover:bg-slate-200"
+              >
+                Close
+              </button>
+            </div>
+
+            <form className="space-y-6" onSubmit={handleFeedbackSubmit}>
+              <div className="grid gap-6 md:grid-cols-2">
+                <label className="space-y-2 text-sm text-slate-700">
+                  Public office visited
+                  <input
+                    value={feedbackForm.office}
+                    onChange={(event) => setFeedbackForm((current) => ({ ...current, office: event.target.value }))}
+                    className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+                    placeholder="LTO CDO District Office"
+                    required
+                  />
+                </label>
+
+                <label className="space-y-2 text-sm text-slate-700">
+                  Branch / location
+                  <select
+                    value={feedbackForm.branchId}
+                    onChange={(event) => setFeedbackForm((current) => ({ ...current, branchId: event.target.value }))}
+                    className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+                    required
+                  >
+                    {branches.map((branch) => (
+                      <option key={branch.id} value={branch.id}>{branch.name}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <label className="space-y-2 text-sm text-slate-700">
+                  Date of visit
+                  <input
+                    type="date"
+                    value={feedbackForm.date}
+                    onChange={(event) => setFeedbackForm((current) => ({ ...current, date: event.target.value }))}
+                    className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+                    required
+                  />
+                </label>
+                <label className="space-y-2 text-sm text-slate-700">
+                  Time of visit
+                  <input
+                    type="time"
+                    value={feedbackForm.time}
+                    onChange={(event) => setFeedbackForm((current) => ({ ...current, time: event.target.value }))}
+                    className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+                    required
+                  />
+                </label>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <label className="space-y-2 text-sm text-slate-700">
+                  Estimated waiting time
+                  <select
+                    value={feedbackForm.waitTime}
+                    onChange={(event) => setFeedbackForm((current) => ({ ...current, waitTime: event.target.value }))}
+                    className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+                  >
+                    {WAIT_TIME_OPTIONS.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="space-y-2 text-sm text-slate-700">
+                  Crowd level
+                  <select
+                    value={feedbackForm.crowdLevel}
+                    onChange={(event) => setFeedbackForm((current) => ({ ...current, crowdLevel: event.target.value }))}
+                    className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+                  >
+                    {CROWD_OPTIONS.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <label className="space-y-2 text-sm text-slate-700">
+                  System issue reported
+                  <select
+                    value={feedbackForm.systemIssue}
+                    onChange={(event) => setFeedbackForm((current) => ({ ...current, systemIssue: event.target.value }))}
+                    className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+                  >
+                    <option value="No">No</option>
+                    <option value="Yes">Yes</option>
+                  </select>
+                </label>
+                <label className="space-y-2 text-sm text-slate-700">
+                  People waiting
+                  <input
+                    value={feedbackForm.waitingCount}
+                    onChange={(event) => setFeedbackForm((current) => ({ ...current, waitingCount: event.target.value }))}
+                    className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+                    placeholder="0 - 10"
+                  />
+                </label>
+              </div>
+
+              <label className="space-y-2 text-sm text-slate-700">
+                Did the experience match the prediction?
+                <select
+                  value={feedbackForm.predictionMatch}
+                  onChange={(event) => setFeedbackForm((current) => ({ ...current, predictionMatch: event.target.value }))}
+                  className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+                >
+                  {PREDICTION_MATCH_OPTIONS.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="space-y-2 text-sm text-slate-700">
+                Feedback notes
+                <textarea
+                  value={feedbackForm.comments}
+                  onChange={(event) => setFeedbackForm((current) => ({ ...current, comments: event.target.value }))}
+                  className="min-h-[120px] w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+                  placeholder="Share any detail about your queue or service experience"
+                />
+              </label>
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-slate-500">Feedback is stored locally and improves future branch availability.</p>
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-2 rounded-3xl bg-sky-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-200 transition hover:bg-sky-700"
+                >
+                  Submit feedback
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

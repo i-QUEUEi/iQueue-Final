@@ -1,9 +1,29 @@
+import { useEffect, useMemo, useState } from 'react';
 import AdminHeader from '@/components/admin/AdminHeader';
 import BranchOnboardingNotice from '@/components/admin/BranchOnboardingNotice';
+import { useBranch } from '@/lib/branch-context';
 import { useBranchData } from '@/lib/use-branch-data';
+import { loadVisitorRequests } from '@/lib/visitor-storage';
+import type { VisitorRequest } from '@/lib/visitor-storage';
 
 export default function Visits() {
-  const { hasBranchData } = useBranchData();
+  const { hasBranchData, branch } = useBranchData();
+  const { branches } = useBranch();
+  const [visitorRequests, setVisitorRequests] = useState<VisitorRequest[]>([]);
+
+  useEffect(() => {
+    setVisitorRequests(loadVisitorRequests());
+  }, []);
+
+  const branchRequests = useMemo(
+    () => visitorRequests.filter((request) => request.branchId === branch?.id),
+    [visitorRequests, branch?.id]
+  );
+
+  const totalRequests = branchRequests.length;
+  const pendingCount = branchRequests.filter((request) => request.status === 'pending').length;
+  const confirmedCount = branchRequests.filter((request) => request.status === 'confirmed').length;
+
   const handleRefresh = () => {
     window.location.reload();
   };
@@ -20,159 +40,105 @@ export default function Visits() {
   return (
     <>
       <AdminHeader title="Confirmed Visits" showActions={true} onRefresh={handleRefresh} />
+
       <div className="flex-1 overflow-y-auto hide-scrollbar px-8 py-8 space-y-8 pb-8">
-        {/* Confirmed Visits Summary */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Today's Summary</h2>
-          <div className="grid grid-cols-4 gap-4">
-            {[
-              { label: 'Total confirmed', value: '342', change: '87% check-in rate' },
-              { label: 'Checked in', value: '297', change: 'By 2:00 PM' },
-              { label: 'Pending arrival', value: '45', change: 'Arriving after 2:30 PM' },
-              { label: 'No-shows', value: '8', change: '2.3% no-show rate' }
-            ].map((stat, idx) => (
-              <div key={idx} className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-100 shadow-sm hover:shadow-lg transition-all duration-300 p-6">
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">{stat.label}</p>
-                <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
-                <p className="text-xs text-gray-700 mt-3">{stat.change}</p>
+          <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Branch requests</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-6 shadow-sm">
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-3">Total requests</p>
+              <p className="text-3xl font-bold text-slate-950">{totalRequests}</p>
+              <p className="text-sm text-slate-500 mt-3">Requests submitted by citizens for {branch?.name}.</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-6 shadow-sm">
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-3">Confirmed</p>
+              <p className="text-3xl font-bold text-slate-950">{confirmedCount}</p>
+              <p className="text-sm text-slate-500 mt-3">Requests marked confirmed or reviewed by admin.</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-6 shadow-sm">
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-3">Pending</p>
+              <p className="text-3xl font-bold text-slate-950">{pendingCount}</p>
+              <p className="text-sm text-slate-500 mt-3">Visitor requests still waiting for arrival or review.</p>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-950">Visitor request queue</h3>
+                <p className="text-sm text-slate-600">See visitor requests from the end-user landing page for this branch.</p>
               </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Expected Arrivals */}
-        <section>
-          <div className="rounded-2xl border border-blue-200 bg-white shadow-sm p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Expected Arrivals Today</h3>
-              <div className="text-xs font-medium text-gray-600">342 confirmed visits</div>
+              <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-slate-600">
+                {branch?.name}
+              </span>
             </div>
-            <div className="max-h-96 overflow-y-auto pr-2" style={{ scrollbarWidth: 'none' }}>
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-200">
-                  <tr>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Time</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Name</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Service</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Branch</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {[
-                    { time: '9:15 AM', name: 'J. Reyes', service: 'Driver\'s License Renewal', branch: 'Main', status: 'Checked in' },
-                    { time: '9:30 AM', name: 'M. Santos', service: 'Driver\'s License Application', branch: 'Main', status: 'Checked in' },
-                    { time: '10:00 AM', name: 'R. Cruz', service: 'Vehicle Registration Renewal', branch: 'Main', status: 'Checked in' },
-                    { time: '10:15 AM', name: 'L. Tan', service: 'LTMS Account Assistance', branch: 'North', status: 'Checked in' },
-                    { time: '10:45 AM', name: 'A. Benitiz', service: 'Driver\'s License Renewal', branch: 'Main', status: 'Checked in' },
-                    { time: '11:00 AM', name: 'K. Lopez', service: 'License Plate Issuance', branch: 'East', status: 'Pending' },
-                    { time: '11:30 AM', name: 'S. Garcia', service: 'Driver\'s License Application', branch: 'Main', status: 'Pending' },
-                    { time: '2:00 PM', name: 'P. Rodriguez', service: 'Vehicle Registration Renewal', branch: 'North', status: 'Pending' },
-                    { time: '2:45 PM', name: 'M. Villanueva', service: 'Driver\'s License Renewal', branch: 'Main', status: 'Pending' },
-                    { time: '3:30 PM', name: 'D. Fernandez', service: 'LTMS Account Assistance', branch: 'East', status: 'Pending' }
-                  ].map((visit, idx) => (
-                    <tr key={idx} className={`hover:bg-gray-50 transition-colors duration-200 ${
-                      visit.status === 'Checked in' ? 'bg-green-50' : 'bg-gray-50'
-                    }`}>
-                      <td className="py-3 px-4 font-medium text-gray-900">{visit.time}</td>
-                      <td className="py-3 px-4 text-gray-700">{visit.name}</td>
-                      <td className="py-3 px-4 text-gray-600 text-xs">{visit.service}</td>
-                      <td className="py-3 px-4 text-gray-600 text-xs">{visit.branch}</td>
-                      <td className="py-3 px-4">
-                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                          visit.status === 'Checked in'
-                            ? 'bg-green-200 text-green-700'
-                            : 'bg-blue-200 text-blue-700'
-                        }`}>
-                          {visit.status}
-                        </span>
-                      </td>
+
+            {branchRequests.length ? (
+              <div className="max-h-[600px] overflow-y-auto pr-2" style={{ scrollbarWidth: 'none' }}>
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-slate-50 border-b border-slate-200">
+                    <tr>
+                      <th className="py-3 px-4 text-left font-semibold text-slate-700">Date</th>
+                      <th className="py-3 px-4 text-left font-semibold text-slate-700">Name</th>
+                      <th className="py-3 px-4 text-left font-semibold text-slate-700">Service</th>
+                      <th className="py-3 px-4 text-left font-semibold text-slate-700">Contact</th>
+                      <th className="py-3 px-4 text-left font-semibold text-slate-700">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {branchRequests.map((visit) => (
+                      <tr key={visit.id} className="hover:bg-slate-50 transition-colors duration-200">
+                        <td className="py-4 px-4 text-slate-900 font-medium">{visit.visitDate} {visit.visitTime}</td>
+                        <td className="py-4 px-4 text-slate-700">{visit.name}</td>
+                        <td className="py-4 px-4 text-slate-600">{visit.service}</td>
+                        <td className="py-4 px-4 text-slate-600">{visit.contact || 'N/A'}</td>
+                        <td className="py-4 px-4">
+                          <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                            visit.status === 'confirmed'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : 'bg-amber-100 text-amber-700'
+                          }`}>
+                            {visit.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-12 text-center text-sm text-slate-600">
+                No visitor requests have been submitted yet for this branch. Encourage users to submit a visit on the landing page.
+              </div>
+            )}
           </div>
         </section>
 
-        {/* Hourly Confirmed Visits Chart */}
-        <section>
-          <div className="rounded-2xl border border-blue-200 bg-white shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Hourly Confirmed Visits</h3>
-            <div className="h-56 bg-gradient-to-br from-blue-50 to-cyan-100 rounded-xl border border-blue-200 flex items-end justify-around p-8 gap-2 overflow-hidden">
-              {[42, 68, 92, 78, 65, 48, 32, 18].map((count, i) => (
-                <div key={i} className="flex-1 grid h-full grid-rows-[1fr_auto] items-end gap-3">
-                  <div className="relative h-full w-full overflow-hidden rounded-t-lg bg-white/0 flex items-end">
-                    <div
-                      className="w-full bg-gradient-to-t from-blue-500 to-cyan-400 rounded-t-lg transition-all duration-300 hover:from-blue-600 hover:to-cyan-500"
-                      style={{ height: `${count}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-gray-600 text-center">9-{10 + i}</p>
+        <section className="grid gap-6 lg:grid-cols-2">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-slate-950 mb-4">Branch overview</h3>
+            <div className="space-y-3 text-sm text-slate-600">
+              <p>{branch?.fullName}</p>
+              <p>{branch?.address}</p>
+              <p>{branch?.city}, {branch?.province}</p>
+              <p>Available services: {branch?.services.join(', ')}</p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-slate-950 mb-4">Branches available</h3>
+            <div className="grid gap-3">
+              {branches.slice(0, 6).map((branchItem) => (
+                <div key={branchItem.id} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="font-medium text-slate-900">{branchItem.name}</p>
+                  <p className="text-xs text-slate-500">{branchItem.agency}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
-
-        {/* Confirmed vs Pending Analysis */}
-        <div className="grid grid-cols-2 gap-6 items-stretch">
-          <section>
-            <div className="rounded-2xl border border-blue-200 bg-white shadow-sm p-6 h-full flex flex-col">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">Check-in Trend</h3>
-              <div className="space-y-3 flex-1">
-                {[
-                  { time: 'By 10:00 AM', checked: 127, percentage: 85 },
-                  { time: 'By 12:00 PM', checked: 208, percentage: 89 },
-                  { time: 'By 2:00 PM', checked: 297, percentage: 87 }
-                ].map((item, idx) => (
-                  <div key={idx} className="p-4 rounded-lg bg-gradient-to-r from-gray-50 to-blue-50 border border-blue-200">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-medium text-gray-900">{item.time}</span>
-                      <span className="font-bold text-blue-600">{item.checked} checked in</span>
-                    </div>
-                    <div className="w-full h-5 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-green-500 to-green-600"
-                        style={{ width: `${item.percentage}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-gray-600 mt-1">{item.percentage}% on-time arrival</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <section>
-            <div className="rounded-2xl border border-blue-200 bg-white shadow-sm p-6 h-full flex flex-col">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">Service Distribution</h3>
-              <div className="space-y-3 flex-1">
-                {[
-                  { service: 'Driver\'s License Renewal', count: 89, confirmed: 78 },
-                  { service: 'Driver\'s License Application', count: 67, confirmed: 59 },
-                  { service: 'Vehicle Registration Renewal', count: 54, confirmed: 48 },
-                  { service: 'LTMS Account Assistance', count: 45, confirmed: 39 },
-                  { service: 'License Plate Issuance', count: 42, confirmed: 35 },
-                  { service: 'Other Services', count: 45, confirmed: 38 }
-                ].map((item, idx) => (
-                  <div key={idx} className="p-3 rounded-lg bg-gradient-to-r from-gray-50 to-blue-50 border border-blue-200">
-                    <div className="flex justify-between items-start mb-1">
-                      <span className="font-medium text-gray-900 text-sm">{item.service}</span>
-                      <span className="text-xs font-bold text-gray-700">{item.confirmed}/{item.count}</span>
-                    </div>
-                    <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-blue-500 to-blue-600"
-                        style={{ width: `${(item.confirmed / item.count) * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        </div>
       </div>
     </>
   );

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import AdminSidebar from '@/components/admin/AdminSidebar';
-import { BranchProvider } from '@/lib/branch-context';
 import AdminDashboard from './AdminDashboard';
 import Analytics from './Analytics';
 import Forecast from './Forecast';
@@ -19,11 +18,7 @@ interface AdminLayoutProps {
 const PAGE_STORAGE_KEY = 'adminCurrentPage';
 
 export default function AdminLayout({ onPageChange }: AdminLayoutProps) {
-  return (
-    <BranchProvider>
-      <AdminLayoutContent onPageChange={onPageChange} />
-    </BranchProvider>
-  );
+  return <AdminLayoutContent onPageChange={onPageChange} />;
 }
 
 function AdminLayoutContent({ onPageChange }: AdminLayoutProps) {
