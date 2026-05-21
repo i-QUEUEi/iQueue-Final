@@ -11,10 +11,10 @@ export default function BranchOnboardingNotice() {
         <p className="mt-3 text-sm leading-7 text-gray-600">
           This location is not yet connected to live operational analytics. Branch-specific dashboards, reports, and real-time charts will be available once it is fully integrated with the platform.
         </p>
-        <p className="mt-4 text-sm leading-7 text-gray-600">
+        <p className="mt-0 text-sm leading-7 text-gray-600">
           For current production data, switch to the LTO Cagayan de Oro District Office.
         </p>
-        <div className="mt-6 inline-flex items-center gap-3 rounded-full bg-white px-4 py-3 border border-amber-200 shadow-sm text-sm font-medium text-amber-800">
+        <div className="mt-3 inline-flex items-center gap-3 rounded-full bg-white px-4 py-3 border border-amber-200 shadow-sm text-sm font-medium text-amber-800">
           <span className="inline-flex h-2.5 w-2.5 rounded-full bg-amber-500" />
           Branch data is pending integration
         </div>

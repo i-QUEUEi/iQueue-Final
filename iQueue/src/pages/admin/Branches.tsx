@@ -221,19 +221,24 @@ export default function Branches() {
             </section>
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch">
-              <section className="h-full">
-                <div className="h-full rounded-2xl border border-green-200 bg-white shadow-sm p-6">
+              <section className="h-full min-h-0">
+                <div className="h-full rounded-2xl border border-green-200 bg-white shadow-sm p-6 min-h-0 flex flex-col">
                   <h3 className="text-lg font-semibold text-gray-900 mb-6">Visitor Distribution</h3>
-                  <div className="h-44 bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl border border-green-200 flex items-end justify-around p-6 gap-3">
+                  <div className="min-h-[240px] bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl border border-green-200 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-4 items-end justify-items-center p-4 overflow-hidden">
                     {distributionData.map((item, i) => {
                       const branchData = getBranch(item.id);
                       const percentage = Math.min(100, (item.visitors / maxVisitors) * 100);
                       return (
-                        <div key={i} className="flex-1 flex flex-col items-center gap-3 min-w-[48px]">
-                          <div className="w-full rounded-t-lg bg-gradient-to-t from-green-500 to-emerald-400 transition-all duration-300 hover:from-green-600 hover:to-emerald-500" style={{ height: `${Math.max(18, percentage)}%`, minHeight: '20px', width: '100%' }} />
-                          <div className="text-center">
-                            <p className="text-xs text-gray-700 font-medium">{branchData?.name ?? item.id}</p>
-                            <p className="text-xs font-bold text-gray-900">{item.visitors}</p>
+                        <div key={i} className="w-full max-w-[140px] flex flex-col items-center gap-3">
+                          <div className="relative w-full h-28 overflow-hidden rounded-t-2xl bg-white/0 flex items-end">
+                            <div
+                              className="absolute bottom-0 left-0 w-full rounded-t-2xl bg-gradient-to-t from-green-500 to-emerald-400 transition-all duration-300 hover:from-green-600 hover:to-emerald-500"
+                              style={{ height: `${Math.max(18, percentage)}%` }}
+                            />
+                          </div>
+                          <div className="text-center min-w-0">
+                            <p className="text-xs text-gray-700 font-medium leading-tight break-words whitespace-normal">{branchData?.name ?? item.id}</p>
+                            <p className="text-xs font-bold text-gray-900 whitespace-nowrap">{item.visitors}</p>
                           </div>
                         </div>
                       );
@@ -242,16 +247,16 @@ export default function Branches() {
                 </div>
               </section>
 
-              <section className="h-full">
-                <div className="h-full rounded-2xl border border-green-200 bg-white shadow-sm p-6">
+              <section className="h-full min-h-0">
+                <div className="rounded-2xl border border-green-200 bg-white shadow-sm p-6 flex flex-col">
                   <h3 className="text-lg font-semibold text-gray-900 mb-6">Current Staff Schedule</h3>
-                  <div className="space-y-3 h-full">
+                  <div className="space-y-3">
                     {scheduleCards.map((schedule, idx) => {
                       const branchData = getBranch(schedule.id);
                       return (
-                        <div key={idx} className="h-full p-4 rounded-lg bg-gradient-to-r from-gray-50 to-green-50 border border-green-200">
+                        <div key={idx} className="p-4 rounded-lg bg-gradient-to-r from-gray-50 to-green-50 border border-green-200">
                           <p className="font-semibold text-gray-900 mb-3">{branchData?.name ?? schedule.id}</p>
-                          <div className="grid grid-cols-3 gap-3 text-xs">
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                             <div className="text-center">
                               <p className="text-gray-600 font-medium mb-1">Morning</p>
                               <p className="text-gray-900">{schedule.morning}</p>
