@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { useBranch } from '@/lib/branch-context';
+import Footer from '@/components/layout/Footer';
 import {
   addVisitorFeedback,
   addVisitorRequest,
@@ -428,12 +429,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="mt-12 bg-orange-400 py-12 text-center text-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-center gap-3 px-6">
-          <img src={WordmarkBlue} alt="iQueue" className="h-8 w-auto" />
-          <span className="text-2xl font-semibold">Footer</span>
-        </div>
-      </footer>
+      <Footer />
 
       {/* ── Visit Modal ── */}
       {visitModalOpen ? (
