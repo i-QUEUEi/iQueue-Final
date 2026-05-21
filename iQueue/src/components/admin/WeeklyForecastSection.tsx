@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { fetchWeeklyForecast, type WeeklyForecastResponse } from '@/lib/api';
+import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { fetchWeeklyForecast, type WeeklyForecastDay, type WeeklyForecastResponse } from '@/lib/api';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = [
@@ -56,6 +56,36 @@ function congestionStyles(congestion: string) {
         badge: 'bg-emerald-100 text-emerald-700',
         surface: 'border-emerald-200 bg-emerald-50',
       };
+  }
+}
+
+function buildDailyAiInsight(day: WeeklyForecastDay) {
+  if (day.isHoliday) {
+    return 'AI Insight: Treat this as a closed-service day and redirect appointments to the nearest available service date.';
+  }
+
+  if (!day.bestTime || !day.worstTime || day.bestWait === null || day.worstWait === null) {
+    return 'AI Insight: Forecast detail is limited for this day, so keep staffing flexible until more hourly data is available.';
+  }
+
+  const bestWait = Math.round(day.bestWait);
+  const worstWait = Math.round(day.worstWait);
+  const gap = Math.max(0, worstWait - bestWait);
+  const sortedHours = [...day.hourly].sort((a, b) => b.wait - a.wait);
+  const peakHour = sortedHours[0]?.hour ?? day.worstTime;
+  const nextPeakHour = sortedHours[1]?.hour;
+
+  switch (day.congestion) {
+    case 'HIGH':
+      return `AI Insight: Shift flexible visits toward ${day.bestTime}; protect staffing around ${peakHour}${nextPeakHour ? ` and ${nextPeakHour}` : ''} when waits can climb by ${gap} min.`;
+    case 'MODERATE':
+      return `AI Insight: Keep a normal team ready, then add queue support near ${day.worstTime}; ${day.bestTime} is the best slot for lower-priority visits.`;
+    case 'LOW':
+      return `AI Insight: Demand looks manageable, so use ${day.bestTime} for quick transactions and monitor ${day.worstTime} for a short queue build-up.`;
+    case 'CLOSED':
+      return 'AI Insight: No active service forecast is available for this day.';
+    default:
+      return `AI Insight: Use ${day.bestTime} as the recommended slot and watch ${day.worstTime}, where the model expects the longest wait.`;
   }
 }
 
@@ -303,6 +333,13 @@ export default function WeeklyForecastSection() {
                                 {day.worstTime ? `${day.worstTime} (${day.worstWait} min)` : 'No data'}
                               </span>
                             </div>
+                          </div>
+                          <div className="mt-4 rounded-xl border border-white/70 bg-white/70 p-3 shadow-sm">
+                            <div className="mb-1 flex items-center gap-2">
+                              <Sparkles className="h-4 w-4 text-blue-600" />
+                              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">AI Insight</p>
+                            </div>
+                            <p className="text-sm leading-relaxed text-gray-700">{buildDailyAiInsight(day)}</p>
                           </div>
                           {day.hourly.length > 0 ? (
                             <div className="mt-4">
