@@ -118,9 +118,9 @@ export default function AdminDashboard() {
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Top Services</h3>
               <div className="space-y-3 flex-1">
                 {[
-                  { service: 'Civil Registry', count: 348, percentage: 28 },
-                  { service: 'Business Permit', count: 274, percentage: 22 },
-                  { service: 'Tax Clearance', count: 198, percentage: 16 }
+                  { service: 'Driver\'s License Renewal', count: 348, percentage: 28 },
+                  { service: 'Student Permit Application', count: 274, percentage: 22 },
+                  { service: 'Vehicle Registration Renewal', count: 198, percentage: 16 }
                 ].map((item, idx) => (
                   <div key={idx} className="p-4 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-300">
                     <div className="flex justify-between items-center mb-2">

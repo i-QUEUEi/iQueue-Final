@@ -94,11 +94,10 @@ export default function Analytics() {
             <h3 className="text-lg font-semibold text-gray-900 mb-6">Service Breakdown</h3>
             <div className="flex-1 min-h-0 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden space-y-3">
               {[
-                { service: 'Civil Registry', count: 348, percentage: 28 },
-                { service: 'Business Permit', count: 274, percentage: 22 },
-                { service: 'Tax Clearance', count: 198, percentage: 16 },
-                { service: 'Health Certificate', count: 156, percentage: 12 },
-                { service: 'Job Application', count: 142, percentage: 11 },
+                { service: 'Driver\'s License Renewal', count: 348, percentage: 28 },
+                { service: 'Driver\'s License Application', count: 274, percentage: 22 },
+                { service: 'Vehicle Registration Renewal', count: 198, percentage: 16 },
+                { service: 'LTMS Account Assistance', count: 156, percentage: 12 },
                 { service: 'Other Services', count: 129, percentage: 11 }
               ].map((item, idx) => (
                 <div key={idx} className="p-4 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 hover:border-blue-300 transition-colors duration-200">
