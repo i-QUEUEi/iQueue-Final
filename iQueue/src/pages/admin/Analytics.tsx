@@ -22,6 +22,7 @@ export default function Analytics() {
       <AdminHeader title="Analytics" showActions={true} onRefresh={handleRefresh} />
       <div className="border-b border-gray-200" />
       <div className="flex-1 overflow-y-auto hide-scrollbar px-8 py-8 space-y-8 pb-8" style={{ fontFamily: "'Product Sans', 'Google Sans', sans-serif" }}>
+
         {/* Operation Analytics Summary */}
         <section>
           <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Operation Analytics</h2>
@@ -63,63 +64,59 @@ export default function Analytics() {
         </section>
 
         {/* 7-Day Visitor Count & Service Breakdown */}
-        <div className="grid grid-cols-2 gap-6">
-          <section>
-            <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">7-Day Visitor Count</h3>
-              <div className="space-y-4">
-                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day, idx) => {
-                  const visitors = [1247, 1156, 1289, 1402, 1198, 892, 654][idx];
-                  const maxVisitors = 1402;
-                  const percentage = (visitors / maxVisitors) * 100;
-                  return (
-                    <div key={idx}>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium text-gray-700">{day}</span>
-                        <span className="text-sm font-bold text-gray-900">{visitors}</span>
-                      </div>
-                      <div className="w-full h-6 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300"
-                          style={{ width: `${percentage}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-
-          <section>
-            <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">Service Breakdown</h3>
-              <div className="space-y-3">
-                {[
-                  { service: 'Civil Registry', count: 348, percentage: 28 },
-                  { service: 'Business Permit', count: 274, percentage: 22 },
-                  { service: 'Tax Clearance', count: 198, percentage: 16 },
-                  { service: 'Health Certificate', count: 156, percentage: 12 },
-                  { service: 'Job Application', count: 142, percentage: 11 },
-                  { service: 'Other Services', count: 129, percentage: 11 }
-                ].map((item, idx) => (
-                  <div key={idx} className="p-4 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 hover:border-blue-300 transition-colors duration-200">
+        <div className="grid grid-cols-2 gap-6 items-stretch">
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 flex flex-col">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">7-Day Visitor Count</h3>
+            <div className="space-y-4">
+              {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day, idx) => {
+                const visitors = [1247, 1156, 1289, 1402, 1198, 892, 654][idx];
+                const maxVisitors = 1402;
+                const percentage = (visitors / maxVisitors) * 100;
+                return (
+                  <div key={idx}>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="font-medium text-gray-900 text-sm">{item.service}</span>
-                      <span className="font-bold text-gray-900 text-sm">{item.count}</span>
+                      <span className="text-sm font-medium text-gray-700">{day}</span>
+                      <span className="text-sm font-bold text-gray-900">{visitors}</span>
                     </div>
-                    <div className="w-full h-5 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="w-full h-6 bg-gray-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-blue-500 to-blue-600"
-                        style={{ width: `${item.percentage}%` }}
+                        className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300"
+                        style={{ width: `${percentage}%` }}
                       ></div>
                     </div>
-                    <p className="text-xs text-gray-600 mt-1">{item.percentage}% of total</p>
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          </section>
+          </div>
+
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 flex flex-col">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">Service Breakdown</h3>
+            <div className="flex-1 min-h-0 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden space-y-3">
+              {[
+                { service: 'Civil Registry', count: 348, percentage: 28 },
+                { service: 'Business Permit', count: 274, percentage: 22 },
+                { service: 'Tax Clearance', count: 198, percentage: 16 },
+                { service: 'Health Certificate', count: 156, percentage: 12 },
+                { service: 'Job Application', count: 142, percentage: 11 },
+                { service: 'Other Services', count: 129, percentage: 11 }
+              ].map((item, idx) => (
+                <div key={idx} className="p-4 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 hover:border-blue-300 transition-colors duration-200">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium text-gray-900 text-sm">{item.service}</span>
+                    <span className="font-bold text-gray-900 text-sm">{item.count}</span>
+                  </div>
+                  <div className="w-full h-5 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-blue-500 to-blue-600"
+                      style={{ width: `${item.percentage}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">{item.percentage}% of total</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Peak Hours Analysis */}
@@ -147,6 +144,7 @@ export default function Analytics() {
             </div>
           </div>
         </section>
+
       </div>
     </>
   );

@@ -116,11 +116,11 @@ export default function Visits() {
         </section>
 
         {/* Confirmed vs Pending Analysis */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-6 items-stretch">
           <section>
-            <div className="rounded-2xl border border-blue-200 bg-white shadow-sm p-6">
+            <div className="rounded-2xl border border-blue-200 bg-white shadow-sm p-6 h-full flex flex-col">
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Check-in Trend</h3>
-              <div className="space-y-3">
+              <div className="space-y-3 flex-1">
                 {[
                   { time: 'By 10:00 AM', checked: 127, percentage: 85 },
                   { time: 'By 12:00 PM', checked: 208, percentage: 89 },
@@ -145,9 +145,9 @@ export default function Visits() {
           </section>
 
           <section>
-            <div className="rounded-2xl border border-blue-200 bg-white shadow-sm p-6">
+            <div className="rounded-2xl border border-blue-200 bg-white shadow-sm p-6 h-full flex flex-col">
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Service Distribution</h3>
-              <div className="space-y-3">
+              <div className="space-y-3 flex-1">
                 {[
                   { service: 'Civil Registry', count: 89, confirmed: 78 },
                   { service: 'Business Permit', count: 67, confirmed: 59 },

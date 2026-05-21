@@ -81,11 +81,11 @@ export default function AdminDashboard() {
         </section>
 
         {/* VISITOR TRENDS & TOP SERVICES */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-6 items-stretch">
           <section>
-            <div className="rounded-2xl border border-yellow-200 bg-white shadow-sm p-6">
+            <div className="rounded-2xl border border-yellow-200 bg-white shadow-sm p-6 h-full flex flex-col">
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Today's Peak Hours</h3>
-              <div className="space-y-3">
+              <div className="space-y-3 flex-1">
                 {[
                   { hour: '9-10 AM', visitors: 247, status: 'Moderate' },
                   { hour: '10-11 AM', visitors: 312, status: 'High' },
@@ -114,9 +114,9 @@ export default function AdminDashboard() {
           </section>
 
           <section>
-            <div className="rounded-2xl border border-blue-200 bg-white shadow-sm p-6">
+            <div className="rounded-2xl border border-blue-200 bg-white shadow-sm p-6 h-full flex flex-col">
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Top Services</h3>
-              <div className="space-y-3">
+              <div className="space-y-3 flex-1">
                 {[
                   { service: 'Civil Registry', count: 348, percentage: 28 },
                   { service: 'Business Permit', count: 274, percentage: 22 },
@@ -124,8 +124,8 @@ export default function AdminDashboard() {
                 ].map((item, idx) => (
                   <div key={idx} className="p-4 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-300">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="font-medium text-gray-900 text-sm">{item.service}</span>
-                      <span className="font-bold text-gray-900 text-sm">{item.count}</span>
+                      <span className="font-bold text-gray-900 text-md">{item.service}</span>
+                      <span className="font-medium text-gray-900 text-sm">{item.count}</span>
                     </div>
                     <div className="w-full h-5 bg-gray-200 rounded-full overflow-hidden">
                       <div

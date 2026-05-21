@@ -72,11 +72,11 @@ export default function Forecast() {
         </section>
 
         {/* Tomorrow's Hourly Breakdown & Crowd Density */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-6 items-stretch">
           <section>
-            <div className="rounded-2xl border border-orange-200 bg-white shadow-sm p-6">
+            <div className="rounded-2xl border border-orange-200 bg-white shadow-sm p-6 h-full flex flex-col">
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Tomorrow's Hourly Breakdown</h3>
-              <div className="space-y-3">
+              <div className="space-y-3 flex-1">
                 {[
                   { hour: '8:00–9:00 AM', visitors: 120, status: 'Low' },
                   { hour: '9:00–10:00 AM', visitors: 280, status: 'Medium' },
@@ -109,9 +109,9 @@ export default function Forecast() {
           </section>
 
           <section>
-            <div className="rounded-2xl border border-orange-200 bg-white shadow-sm p-6">
+            <div className="rounded-2xl border border-orange-200 bg-white shadow-sm p-6 h-full flex flex-col">
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Crowd Density Forecast</h3>
-              <div className="space-y-4">
+              <div className="space-y-4 flex-1">
                 {[
                   { area: 'Main Lobby', density: 'High', recommendation: 'Open spillover seating' },
                   { area: 'Queue Line 1', density: 'Very High', recommendation: 'Add temporary barriers' },
@@ -140,7 +140,7 @@ export default function Forecast() {
         <section>
           <div className="rounded-2xl border border-orange-200 bg-gradient-to-br from-yellow-50 to-orange-100 shadow-sm p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-6">AI Recommendations for Tomorrow</h3>
-            <div className="space-y-3">
+            <div className="space-y-3 flex-1">
               {[
                 { priority: 'High', recommendation: 'Increase staffing at Window 3 during 10–11 AM peak by 2 additional personnel' },
                 { priority: 'High', recommendation: 'Open Lobby B spillover seating area at 9:30 AM to manage crowd' },

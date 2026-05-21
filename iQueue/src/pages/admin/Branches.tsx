@@ -224,19 +224,19 @@ export default function Branches() {
               <section className="h-full min-h-0">
                 <div className="h-full rounded-2xl border border-green-200 bg-white shadow-sm p-6 min-h-0 flex flex-col">
                   <h3 className="text-lg font-semibold text-gray-900 mb-6">Visitor Distribution</h3>
-                  <div className="min-h-[240px] bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl border border-green-200 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-4 items-end justify-items-center p-4 overflow-hidden">
+                  <div className="min-h-[240px] bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl border border-green-200 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 auto-rows-min gap-4 items-end justify-items-center p-4 overflow-hidden">
                     {distributionData.map((item, i) => {
                       const branchData = getBranch(item.id);
                       const percentage = Math.min(100, (item.visitors / maxVisitors) * 100);
                       return (
-                        <div key={i} className="w-full max-w-[140px] flex flex-col items-center gap-3">
+                        <div key={i} className="w-full max-w-[140px] min-h-0 flex flex-col items-center gap-2">
                           <div className="relative w-full h-28 overflow-hidden rounded-t-2xl bg-white/0 flex items-end">
                             <div
                               className="absolute bottom-0 left-0 w-full rounded-t-2xl bg-gradient-to-t from-green-500 to-emerald-400 transition-all duration-300 hover:from-green-600 hover:to-emerald-500"
                               style={{ height: `${Math.max(18, percentage)}%` }}
                             />
                           </div>
-                          <div className="text-center min-w-0">
+                          <div className="text-center min-w-0 overflow-hidden">
                             <p className="text-xs text-gray-700 font-medium leading-tight break-words whitespace-normal">{branchData?.name ?? item.id}</p>
                             <p className="text-xs font-bold text-gray-900 whitespace-nowrap">{item.visitors}</p>
                           </div>
