@@ -44,7 +44,7 @@ export default function Forecast() {
         <section>
           <div className="rounded-2xl border border-orange-200 bg-white shadow-sm p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-6">5-Day Visitor Forecast</h3>
-            <div className="h-64 bg-gradient-to-br from-yellow-50 to-orange-100 rounded-xl border border-orange-200 flex items-end justify-around p-8 gap-3">
+            <div className="h-64 bg-gradient-to-br from-yellow-50 to-orange-100 rounded-xl border border-orange-200 flex items-end justify-around p-8 gap-3 overflow-hidden">
               {[
                 { day: 'Monday', visitors: 1380 },
                 { day: 'Tuesday', visitors: 1240 },
@@ -55,13 +55,15 @@ export default function Forecast() {
                 const maxVisitors = 1620;
                 const percentage = (item.visitors / maxVisitors) * 100;
                 return (
-                  <div key={i} className="flex-1 flex flex-col items-center">
-                    <div
-                      className="w-full bg-gradient-to-t from-orange-500 to-yellow-400 rounded-t-lg transition-all duration-300 hover:from-orange-600 hover:to-yellow-500"
-                      style={{ height: `${(percentage / 100) * 200}px` }}
-                    ></div>
-                    <p className="text-xs text-gray-600 mt-3 text-center font-medium">{item.day}</p>
-                    <p className="text-xs font-bold text-gray-900">{item.visitors}</p>
+                  <div key={i} className="flex-1 grid h-full grid-rows-[1fr_auto_auto] items-end gap-3 min-w-0">
+                    <div className="relative h-full w-full overflow-hidden rounded-t-2xl bg-white/0">
+                      <div
+                        className="absolute bottom-0 left-0 w-full rounded-t-2xl bg-gradient-to-t from-orange-500 to-yellow-400 transition-all duration-300 hover:from-orange-600 hover:to-yellow-500"
+                        style={{ height: `${percentage}%`, minHeight: '10%' }}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-600 text-center font-medium">{item.day}</p>
+                    <p className="text-xs font-bold text-gray-900 text-center">{item.visitors}</p>
                   </div>
                 );
               })}

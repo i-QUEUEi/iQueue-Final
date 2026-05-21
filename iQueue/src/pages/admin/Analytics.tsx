@@ -45,14 +45,16 @@ export default function Analytics() {
         <section>
           <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-6">Office Performance Trends</h3>
-            <div className="h-64 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200 flex items-end justify-around p-8 gap-2">
+            <div className="h-64 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200 flex items-end justify-around p-8 gap-2 overflow-hidden">
               {[45, 52, 68, 72, 88, 92, 78, 65].map((height, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center">
-                  <div
-                    className="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t-lg transition-all duration-300 hover:from-blue-600 hover:to-blue-500"
-                    style={{ height: `${(height / 100) * 200}px` }}
-                  ></div>
-                  <p className="text-xs text-gray-600 mt-3">Day {i + 1}</p>
+                <div key={i} className="flex-1 grid h-full grid-rows-[1fr_auto] items-end gap-3">
+                  <div className="relative h-full w-full overflow-hidden rounded-t-lg bg-white/0 flex items-end">
+                    <div
+                      className="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t-lg transition-all duration-300 hover:from-blue-600 hover:to-blue-500"
+                      style={{ height: `${height}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-gray-600 text-center">Day {i + 1}</p>
                 </div>
               ))}
             </div>

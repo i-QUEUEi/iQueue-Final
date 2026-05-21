@@ -1,5 +1,45 @@
 @import "tailwindcss";
 
+:root {
+  font-family: "Google Sans", sans-serif;
+  font-optical-sizing: auto;
+}
+
+html, body, #root {
+  min-height: 100%;
+  font-family: inherit;
+}
+
+body {
+  margin: 0;
+  font-family: inherit;
+  font-optical-sizing: inherit;
+}
+
+.google-sans-400 {
+  font-family: "Google Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  font-variation-settings: "GRAD" 0;
+}
+
+.google-sans-500 {
+  font-family: "Google Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
+  font-variation-settings: "GRAD" 0;
+}
+
+.google-sans-600 {
+  font-family: "Google Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-style: normal;
+  font-variation-settings: "GRAD" 0;
+}
+
 /* hide scrollbar but keep scroll functionality */
 .hide-scrollbar::-webkit-scrollbar {
 	width: 0px;
