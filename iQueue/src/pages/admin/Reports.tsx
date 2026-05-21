@@ -86,8 +86,8 @@ export default function Reports() {
                 { time: '2:45 PM', category: 'Wait time', msg: 'Queue at Window 3 is about 45 minutes.', votes: 23, status: 'Acknowledged' },
                 { time: '2:30 PM', category: 'Queue', msg: 'Lobby overflow into the hallway near restrooms.', votes: 18, status: 'Under review' },
                 { time: '2:15 PM', category: 'System', msg: 'Kiosk 4 hanging on barcode scan step.', votes: 12, status: 'Resolved' },
-                { time: '1:50 PM', category: 'Wait time', msg: 'Business Permits window taking longer than usual.', votes: 19, status: 'Acknowledged' },
-                { time: '1:30 PM', category: 'Queue', msg: 'Missing signage for Civil Registry queue.', votes: 8, status: 'Under review' },
+                { time: '1:50 PM', category: 'Wait time', msg: 'License Registration window taking longer than usual.', votes: 19, status: 'Acknowledged' },
+                { time: '1:30 PM', category: 'Queue', msg: 'Missing signage for License Plate Issuance.', votes: 8, status: 'Under review' },
                 { time: '1:15 PM', category: 'System', msg: 'Number display board not updating.', votes: 15, status: 'Resolved' },
                 { time: '12:45 PM', category: 'Wait time', msg: 'Expected 20 min wait, now 35 minutes.', votes: 31, status: 'Acknowledged' },
                 { time: '12:20 PM', category: 'Queue', msg: 'Temperature is too high in main lobby.', votes: 7, status: 'Forwarded' }

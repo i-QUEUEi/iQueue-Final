@@ -60,16 +60,16 @@ export default function Visits() {
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {[
-                    { time: '9:15 AM', name: 'J. Reyes', service: 'Civil Registry', branch: 'Main', status: 'Checked in' },
-                    { time: '9:30 AM', name: 'M. Santos', service: 'Business Permit', branch: 'Main', status: 'Checked in' },
-                    { time: '10:00 AM', name: 'R. Cruz', service: 'Tax Clearance', branch: 'Main', status: 'Checked in' },
-                    { time: '10:15 AM', name: 'L. Tan', service: 'Health Certificate', branch: 'North', status: 'Checked in' },
-                    { time: '10:45 AM', name: 'A. Benitiz', service: 'Civil Registry', branch: 'Main', status: 'Checked in' },
-                    { time: '11:00 AM', name: 'K. Lopez', service: 'Job Application', branch: 'East', status: 'Pending' },
-                    { time: '11:30 AM', name: 'S. Garcia', service: 'Business Permit', branch: 'Main', status: 'Pending' },
-                    { time: '2:00 PM', name: 'P. Rodriguez', service: 'Tax Clearance', branch: 'North', status: 'Pending' },
-                    { time: '2:45 PM', name: 'M. Villanueva', service: 'Civil Registry', branch: 'Main', status: 'Pending' },
-                    { time: '3:30 PM', name: 'D. Fernandez', service: 'Health Certificate', branch: 'East', status: 'Pending' }
+                    { time: '9:15 AM', name: 'J. Reyes', service: 'Driver\'s License Renewal', branch: 'Main', status: 'Checked in' },
+                    { time: '9:30 AM', name: 'M. Santos', service: 'Driver\'s License Application', branch: 'Main', status: 'Checked in' },
+                    { time: '10:00 AM', name: 'R. Cruz', service: 'Vehicle Registration Renewal', branch: 'Main', status: 'Checked in' },
+                    { time: '10:15 AM', name: 'L. Tan', service: 'LTMS Account Assistance', branch: 'North', status: 'Checked in' },
+                    { time: '10:45 AM', name: 'A. Benitiz', service: 'Driver\'s License Renewal', branch: 'Main', status: 'Checked in' },
+                    { time: '11:00 AM', name: 'K. Lopez', service: 'License Plate Issuance', branch: 'East', status: 'Pending' },
+                    { time: '11:30 AM', name: 'S. Garcia', service: 'Driver\'s License Application', branch: 'Main', status: 'Pending' },
+                    { time: '2:00 PM', name: 'P. Rodriguez', service: 'Vehicle Registration Renewal', branch: 'North', status: 'Pending' },
+                    { time: '2:45 PM', name: 'M. Villanueva', service: 'Driver\'s License Renewal', branch: 'Main', status: 'Pending' },
+                    { time: '3:30 PM', name: 'D. Fernandez', service: 'LTMS Account Assistance', branch: 'East', status: 'Pending' }
                   ].map((visit, idx) => (
                     <tr key={idx} className={`hover:bg-gray-50 transition-colors duration-200 ${
                       visit.status === 'Checked in' ? 'bg-green-50' : 'bg-gray-50'
@@ -149,11 +149,11 @@ export default function Visits() {
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Service Distribution</h3>
               <div className="space-y-3 flex-1">
                 {[
-                  { service: 'Civil Registry', count: 89, confirmed: 78 },
-                  { service: 'Business Permit', count: 67, confirmed: 59 },
-                  { service: 'Tax Clearance', count: 54, confirmed: 48 },
-                  { service: 'Health Certificate', count: 45, confirmed: 39 },
-                  { service: 'Job Application', count: 42, confirmed: 35 },
+                  { service: 'Driver\'s License Renewal', count: 89, confirmed: 78 },
+                  { service: 'Driver\'s License Application', count: 67, confirmed: 59 },
+                  { service: 'Vehicle Registration Renewal', count: 54, confirmed: 48 },
+                  { service: 'LTMS Account Assistance', count: 45, confirmed: 39 },
+                  { service: 'License Plate Issuance', count: 42, confirmed: 35 },
                   { service: 'Other Services', count: 45, confirmed: 38 }
                 ].map((item, idx) => (
                   <div key={idx} className="p-3 rounded-lg bg-gradient-to-r from-gray-50 to-blue-50 border border-blue-200">
