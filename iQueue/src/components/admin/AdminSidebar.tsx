@@ -18,10 +18,6 @@ const SIDEBAR_ITEMS: { [key: string]: SidebarItem[] } = {
     { label: 'Reports', icon: 'description', section: 'operations' },
     { label: 'Branches', icon: 'location_on', section: 'operations' },
     { label: 'Announcements', icon: 'notifications', section: 'operations' }
-  ],
-  system: [
-    { label: 'System Status', icon: 'health_and_safety', section: 'system' },
-    { label: 'AI Insights', icon: 'auto_awesome', section: 'system' }
   ]
 };
 
@@ -39,7 +35,6 @@ const mapLabelToPage = (label: string): AdminPageType => {
     'reports': 'reports',
     'branches': 'branches',
     'announcements': 'announcements',
-    'system': 'system-status'
   };
   return mapping[label.toLowerCase()] || 'dashboard';
 };
@@ -50,7 +45,6 @@ export default function AdminSidebar({ activePage, onPageChange }: AdminSidebarP
   const allSections = [
     { key: 'overview', label: 'Overview', items: SIDEBAR_ITEMS.overview },
     { key: 'operations', label: 'Operations', items: SIDEBAR_ITEMS.operations },
-    { key: 'system', label: 'System', items: SIDEBAR_ITEMS.system },
   ];
 
   return (
@@ -64,8 +58,8 @@ export default function AdminSidebar({ activePage, onPageChange }: AdminSidebarP
         /* ── Shell ── */
         .admin-sidebar {
           font-family: 'Google Sans', 'Product Sans', sans-serif;
-          width: 256px;
-          min-width: 256px;
+          width: 250px;
+          min-width: 250px;
           background: #ffffff;
           border-right: 1px solid #f0f0f2;
           height: 100vh;
@@ -92,8 +86,7 @@ export default function AdminSidebar({ activePage, onPageChange }: AdminSidebarP
           flex-shrink: 0;
           cursor: pointer;
           user-select: none;
-          transition: padding 0.38s cubic-bezier(0.4,0,0.2,1),
-                      justify-content 0.38s cubic-bezier(0.4,0,0.2,1);
+          transition: padding 0.38s cubic-bezier(0.4,0,0.2,1);
         }
         .admin-sidebar.collapsed .sidebar-logo {
           justify-content: center;
@@ -149,47 +142,79 @@ export default function AdminSidebar({ activePage, onPageChange }: AdminSidebarP
         .sidebar-logo-text h2 { font-size: 15px; font-weight: 600; color: #1C1B1F; margin: 0; line-height: 1.2; }
         .sidebar-logo-text p  { font-size: 11px; color: #9e9ea7; margin: 0; line-height: 1.4; }
 
-        /* ── Nav ── */
+        /* ══════════════════════════════════════
+           NAV — expanded
+        ══════════════════════════════════════ */
         .sidebar-nav {
-          flex: 1; padding: 16px 10px;
-          display: flex; flex-direction: column; gap: 24px;
+          flex: 1;
+          padding: 28px 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
           overflow-y: auto; overflow-x: hidden;
           scrollbar-width: none; -ms-overflow-style: none;
+          transition: padding 0.38s cubic-bezier(0.4,0,0.2,1);
         }
         .sidebar-nav::-webkit-scrollbar { display: none; }
 
+        /* NAV — collapsed: centre every child horizontally */
+        .admin-sidebar.collapsed .sidebar-nav {
+          padding: 28px 0;
+          align-items: center;   /* centres .sidebar-section blocks */
+        }
+
+        /* ── Section wrapper ── */
+        .sidebar-section {
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+        }
+        /* collapsed: shrink to icon column width */
+        .admin-sidebar.collapsed .sidebar-section {
+          width: 44px;
+        }
+
         /* ── Section label ── */
         .sidebar-section-label {
-          font-size: 10px; font-weight: 600; color: #b0b0ba;
+          font-size: 12px; font-weight: 600; color: #b0b0ba;
           text-transform: uppercase; letter-spacing: 0.08em;
           padding: 0 10px; margin-bottom: 6px;
           white-space: nowrap; overflow: hidden;
-          opacity: 1; max-height: 20px; transform: translateX(0);
-          transition: opacity 0.22s cubic-bezier(0.4,0,0.2,1) 0.04s,
-                      transform 0.22s cubic-bezier(0.4,0,0.2,1) 0.04s,
-                      max-height 0.28s cubic-bezier(0.4,0,0.2,1),
-                      margin-bottom 0.28s cubic-bezier(0.4,0,0.2,1);
+          opacity: 1; max-height: 20px;
+          transition: opacity 0.22s 0.04s, max-height 0.28s, margin-bottom 0.28s;
         }
         .admin-sidebar.collapsed .sidebar-section-label {
-          opacity: 0; transform: translateX(-8px);
-          max-height: 0; margin-bottom: 0; pointer-events: none;
+          opacity: 0; max-height: 0; margin-bottom: 0; pointer-events: none;
         }
 
-        /* ── Nav button ── */
+        /* ── Button group ── */
+        .sidebar-btn-group {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        /* ══════════════════════════════════════
+           NAV BUTTON
+        ══════════════════════════════════════ */
         .sidebar-btn {
-          width: 100%; border: none; background: transparent; cursor: pointer;
+          width: 100%;
+          border: none; background: transparent; cursor: pointer;
           display: flex; align-items: center; justify-content: flex-start;
-          gap: 10px; padding: 9px 10px; border-radius: 10px;
+          gap: 10px;
+          padding: 9px 10px;
+          border-radius: 10px;
           position: relative; overflow: hidden;
-          transition: background 0.18s ease,
-                      padding 0.38s cubic-bezier(0.4,0,0.2,1),
+          transition: background 0.18s ease, padding 0.38s cubic-bezier(0.4,0,0.2,1),
                       justify-content 0s;
+          animation: sidebar-fade-in 0.3s cubic-bezier(0.4,0,0.2,1) both;
         }
 
-        /* ── COLLAPSED ONLY: center the icon ── */
+        /* collapsed button — width is already 44px from parent .sidebar-section */
         .admin-sidebar.collapsed .sidebar-btn {
+          height: 44px;
+          padding: 0;
           justify-content: center;
-          padding: 10px 0;
         }
 
         .sidebar-btn::before {
@@ -205,9 +230,9 @@ export default function AdminSidebar({ activePage, onPageChange }: AdminSidebarP
           font-size: 20px; color: #9292a0; flex-shrink: 0;
           font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
           position: relative; z-index: 1;
-          line-height: 1; display: flex; align-items: center;
-          transition: color 0.18s ease,
-                      transform 0.24s cubic-bezier(0.34,1.56,0.64,1);
+          display: flex; align-items: center; justify-content: center;
+          width: 20px; height: 20px; line-height: 1;
+          transition: color 0.18s ease, transform 0.24s cubic-bezier(0.34,1.56,0.64,1);
         }
         .sidebar-btn.active .sidebar-btn-icon { color: white; }
         .sidebar-btn:not(.active):hover .sidebar-btn-icon {
@@ -220,29 +245,27 @@ export default function AdminSidebar({ activePage, onPageChange }: AdminSidebarP
           margin-left: 6px;
           font-size: 15px; font-weight: 500; color: #1C1B1F;
           white-space: nowrap; overflow: hidden;
-          opacity: 1; max-width: 160px; transform: translateX(0);
+          opacity: 1; max-width: 160px;
           transition: opacity 0.24s cubic-bezier(0.4,0,0.2,1),
-                      transform 0.24s cubic-bezier(0.4,0,0.2,1),
                       max-width 0.38s cubic-bezier(0.4,0,0.2,1),
                       color 0.18s ease;
           position: relative; z-index: 1;
         }
         .sidebar-btn.active .sidebar-btn-label { color: white; }
         .admin-sidebar.collapsed .sidebar-btn-label {
-          opacity: 0; transform: translateX(-8px);
-          max-width: 0; pointer-events: none;
+          opacity: 0; max-width: 0; pointer-events: none; margin-left: 0;
         }
 
         /* ── Tooltip (collapsed only) ── */
         .sidebar-btn-tooltip {
-          position: absolute; left: calc(100% + 12px); top: 50%;
+          position: fixed; left: 80px;
           transform: translateY(-50%) translateX(-6px) scale(0.92);
           background: #1C1B1F; color: #fff;
           font-size: 12px; font-weight: 500;
           padding: 5px 10px; border-radius: 7px;
           white-space: nowrap; opacity: 0; pointer-events: none;
           transition: opacity 0.16s ease, transform 0.16s ease;
-          z-index: 200; box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+          z-index: 9999; box-shadow: 0 4px 14px rgba(0,0,0,0.18);
         }
         .sidebar-btn-tooltip::before {
           content: ''; position: absolute; left: -4px; top: 50%;
@@ -254,66 +277,78 @@ export default function AdminSidebar({ activePage, onPageChange }: AdminSidebarP
         }
 
         /* ── Divider ── */
-        .sidebar-divider { height: 1px; background: #f0f0f2; margin: 0 -10px; }
+        .sidebar-divider {
+          height: 1px; background: #f0f0f2;
+          margin: -8px -10px 16px;
+        }
+        .admin-sidebar.collapsed .sidebar-divider {
+          margin: -8px 0 16px;
+        }
 
-        /* ── Footer ── */
+        /* ══════════════════════════════════════
+           FOOTER
+        ══════════════════════════════════════ */
         .sidebar-footer {
           padding: 12px 10px;
           border-top: 1px solid #f0f0f2;
           flex-shrink: 0; overflow: hidden;
         }
+        .admin-sidebar.collapsed .sidebar-footer {
+          padding: 12px 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+
+        /* expanded pill */
         .sidebar-footer-inner {
-          padding: 6px 8px 6px 8px;
+          padding: 6px 8px;
           background: #f8f8fb; border-radius: 10px;
           display: flex; align-items: center; gap: 8px;
-          transition: padding 0.38s cubic-bezier(0.4,0,0.2,1);
+          transition: padding 0.38s, background 0.38s;
         }
         .admin-sidebar.collapsed .sidebar-footer-inner {
-          padding: 8px;
+          padding: 4px;
+          background: transparent;
+          width: 44px;
           justify-content: center;
-          width: 52px;
-          margin: 0 auto;
         }
 
         /* avatar */
         .sidebar-footer-avatar {
-          width: 28px; height: 28px; min-width: 28px;
+          width: 32px; height: 32px; min-width: 32px;
           border-radius: 50%;
           background: linear-gradient(135deg, #2D86A8, #006288);
           display: flex; align-items: center; justify-content: center;
           flex-shrink: 0;
+          font-size: 11px; font-weight: 700; color: white;
+          transition: width 0.22s, height 0.22s, border-radius 0.22s;
         }
-        .sidebar-footer-avatar span { font-size: 11px; font-weight: 700; color: white; }
+        .admin-sidebar.collapsed .sidebar-footer-avatar {
+          width: 36px; height: 36px;
+          border-radius: 10px;
+        }
 
-        /* text */
+        /* footer text */
         .sidebar-footer-text {
           flex: 1; overflow: hidden; white-space: nowrap;
-          opacity: 1; max-width: 140px; transform: translateX(0);
-          transition: opacity 0.24s cubic-bezier(0.4,0,0.2,1),
-                      transform 0.24s cubic-bezier(0.4,0,0.2,1),
-                      max-width 0.38s cubic-bezier(0.4,0,0.2,1);
+          opacity: 1; max-width: 140px;
+          transition: opacity 0.24s, max-width 0.38s;
         }
         .admin-sidebar.collapsed .sidebar-footer-text {
-          opacity: 0; transform: translateX(-8px);
-          max-width: 0; pointer-events: none;
+          opacity: 0; max-width: 0; pointer-events: none;
         }
         .sidebar-footer-text p:first-child { font-size: 10.5px; color: #9e9ea7; margin: 0; line-height: 1.3; }
         .sidebar-footer-text p:last-child  { font-size: 12.5px; font-weight: 600; color: #1C1B1F; margin: 0; line-height: 1.3; }
 
-        /* ── Logout button ── */
+        /* logout btn (expanded) */
         .sidebar-logout-btn {
           width: 28px; height: 28px; min-width: 28px;
-          border-radius: 8px; border: none;
-          background: transparent;
+          border-radius: 8px; border: none; background: transparent;
           display: flex; align-items: center; justify-content: center;
-          cursor: pointer;
-          position: relative; overflow: hidden;
-          transition: background 0.18s ease,
-                      opacity 0.24s cubic-bezier(0.4,0,0.2,1),
-                      max-width 0.38s cubic-bezier(0.4,0,0.2,1),
-                      transform 0.18s ease;
-          flex-shrink: 0;
+          cursor: pointer; flex-shrink: 0;
           opacity: 1; max-width: 28px;
+          transition: background 0.18s, opacity 0.24s, max-width 0.38s, transform 0.18s;
         }
         .admin-sidebar.collapsed .sidebar-logout-btn {
           opacity: 0; max-width: 0; pointer-events: none;
@@ -321,54 +356,40 @@ export default function AdminSidebar({ activePage, onPageChange }: AdminSidebarP
         .sidebar-logout-btn .material-symbols-rounded {
           font-size: 18px; color: #9292a0;
           font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
-          transition: color 0.18s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
+          transition: color 0.18s, transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
         }
-        .sidebar-logout-btn:hover {
-          background: rgba(249,0,0,0.08);
-        }
-        .sidebar-logout-btn:hover .material-symbols-rounded {
-          color: #F90000;
-          transform: translateX(2px);
-        }
+        .sidebar-logout-btn:hover { background: rgba(249,0,0,0.08); }
+        .sidebar-logout-btn:hover .material-symbols-rounded { color: #F90000; transform: translateX(2px); }
         .sidebar-logout-btn:active { transform: scale(0.92); }
 
-        /* collapsed → show logout as standalone icon in footer */
+        /* logout btn (collapsed, separate row) */
         .sidebar-footer-collapsed-logout {
           display: none;
-          width: 100%; justify-content: center;
+          width: 44px; justify-content: center;
+          margin-top: 6px;
         }
         .admin-sidebar.collapsed .sidebar-footer-collapsed-logout {
           display: flex;
-          margin-top: 8px;
         }
         .sidebar-footer-collapsed-logout button {
-          width: 52px; height: 40px;
+          width: 44px; height: 36px;
           border-radius: 10px; border: none; background: #f8f8fb;
           display: flex; align-items: center; justify-content: center;
           cursor: pointer;
-          transition: background 0.18s ease, transform 0.18s ease;
+          transition: background 0.18s, transform 0.18s;
         }
-        .sidebar-footer-collapsed-logout button:hover {
-          background: rgba(249,0,0,0.08);
-        }
-        .sidebar-footer-collapsed-logout button:hover .material-symbols-rounded {
-          color: #F90000;
-          transform: translateX(2px);
-        }
+        .sidebar-footer-collapsed-logout button:hover { background: rgba(249,0,0,0.08); }
+        .sidebar-footer-collapsed-logout button:hover .material-symbols-rounded { color: #F90000; transform: translateX(2px); }
         .sidebar-footer-collapsed-logout button:active { transform: scale(0.92); }
         .sidebar-footer-collapsed-logout button .material-symbols-rounded {
           font-size: 18px; color: #9292a0;
           font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
-          transition: color 0.18s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
+          transition: color 0.18s, transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
         }
 
-        /* ── Stagger-in animation on load ── */
         @keyframes sidebar-fade-in {
           from { opacity: 0; transform: translateX(-6px); }
           to   { opacity: 1; transform: translateX(0); }
-        }
-        .sidebar-btn {
-          animation: sidebar-fade-in 0.3s cubic-bezier(0.4,0,0.2,1) both;
         }
       `}</style>
 
@@ -396,12 +417,10 @@ export default function AdminSidebar({ activePage, onPageChange }: AdminSidebarP
         {/* Nav */}
         <nav className="sidebar-nav">
           {allSections.map((section, si) => (
-            <div key={section.key}>
-              {si > 0 && (
-                <div className="sidebar-divider" style={{ marginBottom: '16px', marginTop: '-8px' }} />
-              )}
+            <div key={section.key} className="sidebar-section">
+              {si > 0 && <div className="sidebar-divider" />}
               <p className="sidebar-section-label">{section.label}</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <div className="sidebar-btn-group">
                 {section.items.map((item, idx) => {
                   const isActive = activePage === mapLabelToPage(item.label);
                   return (
@@ -424,7 +443,6 @@ export default function AdminSidebar({ activePage, onPageChange }: AdminSidebarP
 
         {/* Footer */}
         <div className="sidebar-footer">
-          {/* expanded state */}
           <div className="sidebar-footer-inner">
             <div className="sidebar-footer-avatar">
               <span>AU</span>
@@ -442,8 +460,6 @@ export default function AdminSidebar({ activePage, onPageChange }: AdminSidebarP
               <span className="material-symbols-rounded">logout</span>
             </button>
           </div>
-
-          {/* collapsed state — logout icon only */}
           <div className="sidebar-footer-collapsed-logout">
             <button title="Logout" aria-label="Logout" onClick={() => window.location.href = '/'}>
               <span className="material-symbols-rounded">logout</span>
