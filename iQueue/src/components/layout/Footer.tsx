@@ -2,7 +2,7 @@ import WordmarkRed from '@/assets/WordmarkRed.png';
 
 export default function Footer() {
   return (
-    <footer className="mt-12 w-full bg-orange-400 text-white">
+    <footer className="mt-12 w-full bg-amber-500 text-white">
       <div className="mx-auto max-w-7xl px-6 py-8">
 
         {/* Main layout */}
@@ -12,8 +12,8 @@ export default function Footer() {
           <div className="max-w-sm">
             <img src={WordmarkRed} alt="iQueue" className="h-8 w-auto" />
 
-            <p className="mt-3 text-sm text-white/90 leading-relaxed">
-              iQueue helps public offices manage visitors with smarter wait-time predictions and real-time insights.
+            <p className="mt-2 text-lg font-bold text-red-500 leading-relaxed">
+              Know the Queue Before You Go
             </p>
           </div>
 

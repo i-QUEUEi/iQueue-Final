@@ -21,8 +21,6 @@ import {
   type PredictiveAnalyticsResponse,
 } from '@/lib/api';
 import { HeaderBranchSelector } from '@/components/layout/HeaderBranchSelector';
-import WordmarkRed from '@/assets/WordmarkRed.png';
-import WordmarkBlue from '@/assets/WordmarkBlue.png';
 import HeroSection from '@/components/enduser/HeroSection';
 import WeeklyForecastSection from '@/components/admin/WeeklyForecastSection';
 
@@ -95,6 +93,19 @@ export default function LandingPage() {
     comments: '',
   });
 
+  // ── Freeze background scroll when any modal is open ──
+  const anyModalOpen = visitModalOpen || feedbackModalOpen;
+  useEffect(() => {
+    if (anyModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [anyModalOpen]);
+
   useEffect(() => {
     setVisitorRequests(loadVisitorRequests());
     setVisitorFeedback(loadVisitorFeedback());
@@ -120,7 +131,6 @@ export default function LandingPage() {
         })}`
       );
     };
-
     updateDateTime();
     const timer = window.setInterval(updateDateTime, 1000);
     return () => window.clearInterval(timer);
@@ -161,10 +171,7 @@ export default function LandingPage() {
     }
 
     loadAnalytics();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
@@ -223,12 +230,15 @@ export default function LandingPage() {
   const selectedBranch = branches.find((branch) => branch.id === selectedBranchId) || branches[0];
 
   const groupedAnnouncements = useMemo(() => {
-    return announcements.reduce<Record<'Advisory' | 'Maintenance' | 'Alert' | 'Other', Announcement[]>>((acc, announcement) => {
-      const key = announcement.priority;
-      acc[key] = acc[key] || [];
-      acc[key].push(announcement);
-      return acc;
-    }, { Advisory: [], Maintenance: [], Alert: [], Other: [] });
+    return announcements.reduce<Record<'Advisory' | 'Maintenance' | 'Alert' | 'Other', Announcement[]>>(
+      (acc, announcement) => {
+        const key = announcement.priority;
+        acc[key] = acc[key] || [];
+        acc[key].push(announcement);
+        return acc;
+      },
+      { Advisory: [], Maintenance: [], Alert: [], Other: [] }
+    );
   }, [announcements]);
 
   const today = new Date().toISOString().slice(0, 10);
@@ -325,10 +335,12 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900" style={{ fontFamily: "'Product Sans', 'Google Sans', sans-serif" }}>
+
+      {/* ── Header ── */}
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
-            <img src={WordmarkRed} alt="iQueue" className="h-6 w-auto" />
+            <img src="LogoYellow.svg" alt="iQueue" className="h-8 w-auto" />
             <div className="hidden md:block">
               <p className="text-xs text-slate-500">{dateTime}</p>
               <p className="text-xs font-medium text-slate-700">{selectedBranch?.name || 'Selected Branch'}</p>
@@ -348,6 +360,8 @@ export default function LandingPage() {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-10">
+
+        {/* ── 1. Hero ── */}
         <HeroSection
           totalVisitors={totalVisitors}
           currentCongestion={currentCongestion}
@@ -359,9 +373,15 @@ export default function LandingPage() {
           setFeedbackModalOpen={setFeedbackModalOpen}
         />
 
-        <section className="mt-12">
-          <h2 className="text-center text-3xl font-bold text-slate-950">Announcements</h2>
+        {/* ── Divider ── */}
+        <div className="my-12 flex items-center gap-4">
+          <div className="h-px flex-1 bg-blue-400" />
+          <span className="text-3xl font-bold uppercase tracking-[0.2em] text-blue-600">Announcements</span>
+          <div className="h-px flex-1 bg-blue-400" />
+        </div>
 
+        {/* ── 2. Announcements ── */}
+        <section>
           {announcementError ? (
             <div className="mt-6 rounded-3xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700">
               {announcementError}
@@ -387,7 +407,9 @@ export default function LandingPage() {
                     <div className="flex items-center justify-between gap-4">
                       <div>
                         <h3 className="text-lg font-semibold text-slate-900">{priority} Announcements</h3>
-                        <p className="text-sm text-slate-600">{categoryAnnouncements.length} announcement{categoryAnnouncements.length === 1 ? '' : 's'} in this category.</p>
+                        <p className="text-sm text-slate-600">
+                          {categoryAnnouncements.length} announcement{categoryAnnouncements.length === 1 ? '' : 's'} in this category.
+                        </p>
                       </div>
                     </div>
 
@@ -421,20 +443,31 @@ export default function LandingPage() {
           )}
         </section>
 
-        <section className="mt-12">
-          <h2 className="text-center text-3xl font-bold text-slate-950">Weekly Forecast</h2>
-          <div className="mt-6">
+        {/* ── Divider ── */}
+        <div className="my-12 flex items-center gap-4">
+          <div className="h-px flex-1 bg-red-400" />
+          <span className="text-3xl font-bold uppercase tracking-[0.2em] text-red-600">Weekly Forecast</span>
+          <div className="h-px flex-1 bg-red-400" />
+        </div>
+
+        {/* ── 3. Weekly Forecast ── */}
+        <section>
+              <div className="mt-6">
             <WeeklyForecastSection />
           </div>
         </section>
+
       </main>
 
       <Footer />
 
       {/* ── Visit Modal ── */}
       {visitModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-3xl rounded-[2rem] bg-white p-8 shadow-2xl">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"
+          onClick={(e) => { if (e.target === e.currentTarget) setVisitModalOpen(false); }}
+        >
+          <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-[2rem] bg-white p-8 shadow-2xl">
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm uppercase tracking-[0.24em] text-rose-600">Visit request</p>
@@ -577,8 +610,11 @@ export default function LandingPage() {
 
       {/* ── Feedback Modal ── */}
       {feedbackModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-3xl rounded-[2rem] bg-white p-8 shadow-2xl">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"
+          onClick={(e) => { if (e.target === e.currentTarget) setFeedbackModalOpen(false); }}
+        >
+          <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-[2rem] bg-white p-8 shadow-2xl">
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm uppercase tracking-[0.24em] text-sky-600">Visitor feedback</p>

@@ -26,23 +26,19 @@ export default function HeroSection({
     <section className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
       <div ref={heroRef} className={heroVisible ? 'hero-visible' : ''}>
         <div className="space-y-8 hero-left">
-          <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+
             <div className="flex items-center gap-4">
-              <img src={WordmarkYellow} alt="iQueue" className="h-14 w-auto" />
-              <div className="hidden h-14 border-l border-slate-200 sm:block" />
-              <div className="hidden sm:block">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">End user portal</p>
-                <p className="mt-1 text-sm font-medium text-slate-700">Queue intelligence for public service offices</p>
-              </div>
+              <img src={WordmarkYellow} alt="iQueue" className="h-24 w-auto" />
             </div>
-          </div>
 
           <div className="space-y-6">
             <div>
-              <p className="text-sm uppercase tracking-[0.3em] text-slate-600">Predictive Queue Intelligence for Philippine Government Offices</p>
-              <h1 className="mt-4 max-w-3xl text-5xl font-semibold tracking-tight text-slate-950 sm:text-6xl">
-                Waiting time prediction powered by machine learning, congestion forecasting, and system reliability analysis.
-              </h1>
+             <h1 className="mt-4 max-w-3xl text-4xl sm:text-3xl font-semibold leading-tight text-slate-950">
+              Predictive Queue Intelligence for{' '}
+              <span className="text-amber-500">
+                Philippine Government Offices
+              </span>
+            </h1>
             </div>
 
             <div className="space-y-3 text-sm text-slate-700">
@@ -73,10 +69,10 @@ export default function HeroSection({
       </div>
 
       <div className="space-y-4 hero-right">
-        <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-5 flex items-start justify-between gap-4">
+        <div>
+          <div className="mb-2 flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm uppercase tracking-[0.3em] text-slate-600">Today at a glance</p>
+              <p className="ml-4 text-sm uppercase tracking-[0.1em] text-slate-600">Today at a glance</p>
             </div>
           </div>
 
