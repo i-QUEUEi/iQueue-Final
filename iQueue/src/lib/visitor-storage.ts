@@ -97,6 +97,11 @@ export function addVisitorFeedback(entry: VisitorFeedback) {
   saveVisitorFeedback([...feedback, entry]);
 }
 
+export function deleteVisitorFeedback(id: string) {
+  const feedback = loadVisitorFeedback();
+  saveVisitorFeedback(feedback.filter((entry) => entry.id !== id));
+}
+
 export function subscribeToVisitorStorageChanges(listener: () => void) {
   if (typeof window === 'undefined') {
     return () => undefined;

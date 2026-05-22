@@ -2,6 +2,7 @@ import type { VisitorFeedback, VisitorRequest } from './visitor-storage';
 import type { PredictiveAnalyticsResponse } from './api';
 
 export const DAILY_LIVE_DATA_HISTORY_KEY = 'dailyLiveDataHistory';
+const BASELINE_CURRENT_VISITORS = 113;
 
 export type DailyLiveDataRecord = {
   date: string;
@@ -100,7 +101,7 @@ function buildBaseDailyLiveData(
     date: todayKey,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    totalVisitors: todayRequests.length,
+    totalVisitors: BASELINE_CURRENT_VISITORS + todayRequests.length,
     confirmedVisits,
     pendingVisits,
     feedbackCount: todayFeedback.length,

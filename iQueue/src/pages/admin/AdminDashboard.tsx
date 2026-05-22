@@ -21,7 +21,7 @@ export default function AdminDashboard() {
       label: 'Total visitors',
       value: overview.loading ? 'Loading…' : overview.totalVisitors.toLocaleString(),
       trend: 'up',
-      change: overview.loading ? 'Waiting for live metrics' : 'Live snapshot',
+      change: overview.loading ? 'Waiting for live metrics' : '113 base visitors + new requests',
     },
     {
       label: 'Current congestion',

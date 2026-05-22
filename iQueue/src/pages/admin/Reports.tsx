@@ -3,6 +3,7 @@ import AdminHeader from '@/components/admin/AdminHeader';
 import BranchOnboardingNotice from '@/components/admin/BranchOnboardingNotice';
 import { useBranchData } from '@/lib/use-branch-data';
 import {
+  deleteVisitorFeedback,
   loadVisitorFeedback,
   subscribeToVisitorStorageChanges,
   type VisitorFeedback,
@@ -114,6 +115,12 @@ export default function Reports() {
     refreshFeedback();
     return subscribeToVisitorStorageChanges(refreshFeedback);
   }, []);
+
+  const handleDeleteFeedback = (feedbackId: string) => {
+    const shouldDelete = window.confirm('Delete this submitted feedback?');
+    if (!shouldDelete) return;
+    deleteVisitorFeedback(feedbackId);
+  };
 
   const branchFeedback = useMemo(() => {
     const filtered = branch
@@ -382,6 +389,13 @@ export default function Reports() {
                         <div className="shrink-0 rounded-lg bg-white/80 px-4 py-3 text-right text-xs text-slate-500">
                           <p className="font-semibold uppercase tracking-wide text-slate-600">Submitted</p>
                           <p className="mt-1 text-sm font-medium text-slate-900">{formatSubmittedAt(entry.submittedAt)}</p>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteFeedback(entry.id)}
+                            className="mt-4 inline-flex items-center justify-center rounded-full bg-red-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700"
+                          >
+                            Delete
+                          </button>
                         </div>
                       </div>
                     </div>
