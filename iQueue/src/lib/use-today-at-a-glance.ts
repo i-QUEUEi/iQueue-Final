@@ -30,10 +30,11 @@ interface DailyAnalyticsSnapshot {
   historicalAnalytics: HistoricalAnalyticsResponse | null;
   predictiveAnalytics: PredictiveAnalyticsResponse | null;
   forecastCongestion: string | null;
+  forecastAverageWait: number | null;
 }
 
 function getTodayKey() {
-  return new Date().toISOString().slice(0, 10);
+  return getLocalDateKey(new Date());
 }
 
 function getLocalDateKey(date: Date) {
@@ -90,13 +91,17 @@ function formatCongestionLabel(value: string | null | undefined) {
 }
 
 function getForecastDayKey(value: string) {
-  const parsed = new Date(value);
+  const normalized = value.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    return normalized;
+  }
+
+  const parsed = new Date(normalized);
   if (!Number.isNaN(parsed.getTime())) {
     return getLocalDateKey(parsed);
   }
 
-  const normalized = value.trim();
-  return /^\d{4}-\d{2}-\d{2}$/.test(normalized) ? normalized : null;
+  return null;
 }
 
 function getTodayForecastCongestion(
@@ -107,10 +112,23 @@ function getTodayForecastCongestion(
   return formatCongestionLabel(todayForecast?.congestion);
 }
 
+function getTodayForecastAverageWait(
+  todayKey: string,
+  forecastDays: Array<{ date: string; overall: number | null }> | undefined
+) {
+  const todayForecast = forecastDays?.find((day) => getForecastDayKey(day.date) === todayKey);
+  if (typeof todayForecast?.overall !== 'number') {
+    return null;
+  }
+
+  return Math.round(todayForecast.overall);
+}
+
 export function useTodayAtAGlance() {
   const [historicalAnalytics, setHistoricalAnalytics] = useState<HistoricalAnalyticsResponse | null>(null);
   const [predictiveAnalytics, setPredictiveAnalytics] = useState<PredictiveAnalyticsResponse | null>(null);
   const [forecastCongestion, setForecastCongestion] = useState<string | null>(null);
+  const [forecastAverageWait, setForecastAverageWait] = useState<number | null>(null);
   const [visitorRequests, setVisitorRequests] = useState<VisitorRequest[]>([]);
   const [visitorFeedback, setVisitorFeedback] = useState<VisitorFeedback[]>([]);
   const [dailyLiveData, setDailyLiveData] = useState<DailyLiveDataRecord | null>(null);
@@ -157,6 +175,7 @@ export function useTodayAtAGlance() {
         setHistoricalAnalytics(todaySnapshot.historicalAnalytics);
         setPredictiveAnalytics(todaySnapshot.predictiveAnalytics);
         setForecastCongestion(todaySnapshot.forecastCongestion);
+        setForecastAverageWait(todaySnapshot.forecastAverageWait);
       }
 
       try {
@@ -168,11 +187,13 @@ export function useTodayAtAGlance() {
         ]);
 
         const nextForecastCongestion = getTodayForecastCongestion(todayLocalKey, weeklyForecastResponse.days);
+        const nextForecastAverageWait = getTodayForecastAverageWait(todayLocalKey, weeklyForecastResponse.days);
 
         if (!cancelled) {
           setHistoricalAnalytics(historicalResponse);
           setPredictiveAnalytics(predictiveResponse);
           setForecastCongestion(nextForecastCongestion);
+          setForecastAverageWait(nextForecastAverageWait);
 
           addOrReplaceSnapshot({
             date: todayKey,
@@ -181,6 +202,7 @@ export function useTodayAtAGlance() {
             historicalAnalytics: historicalResponse,
             predictiveAnalytics: predictiveResponse,
             forecastCongestion: nextForecastCongestion,
+            forecastAverageWait: nextForecastAverageWait,
           });
         }
       } catch (err) {
@@ -207,7 +229,9 @@ export function useTodayAtAGlance() {
   }, [visitorRequests, todayDate]);
 
   const defaultAverageWait = 18;
-  const averageWait = dailyLiveData?.averageWait ?? getAverageHistoricalWait(historicalAnalytics, defaultAverageWait);
+  const averageWait = forecastAverageWait
+    ?? dailyLiveData?.averageWait
+    ?? getAverageHistoricalWait(historicalAnalytics, defaultAverageWait);
   const currentCongestion = forecastCongestion
     ?? formatCongestionLabel(dailyLiveData?.currentCongestion)
     ?? formatCongestionLabel(predictiveAnalytics?.predictions?.afternoon?.congestion)

@@ -33,7 +33,7 @@ export default function AdminDashboard() {
       label: 'Avg waiting time',
       value: overview.loading ? 'Loading…' : `${overview.avgWait} min`,
       trend: 'down',
-      change: overview.loading ? 'Waiting for live metrics' : 'Updated from dataset',
+      change: overview.loading ? 'Waiting for live metrics' : "Based on today's forecast",
     },
     {
       label: 'Confirmed visits',

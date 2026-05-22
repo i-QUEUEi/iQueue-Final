@@ -416,7 +416,7 @@ export default function WeeklyForecastSection() {
                                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Hourly Outlook</p>
                               </div>
                               <div className="grid grid-cols-3 gap-2">
-                                {day.hourly.slice(0, 6).map((hour) => (
+                                {day.hourly.map((hour) => (
                                   <div key={hour.hour} className="rounded-lg bg-white/80 px-2 py-2 text-center">
                                     <p className="text-xs text-gray-500">{hour.hour}</p>
                                     <p className="text-sm font-semibold text-gray-900">{Math.round(hour.wait)}m</p>
