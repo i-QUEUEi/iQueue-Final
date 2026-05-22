@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import AdminHeader from '@/components/admin/AdminHeader';
 import { useBranch } from '@/lib/branch-context';
 import { getBranch } from '@/lib/branches';
 import BranchModal from '@/components/admin/BranchModal';
 import { useBranchData } from '@/lib/use-branch-data';
+import { loadVisitorRequests, type VisitorRequest, VISITOR_REQUESTS_UPDATED_EVENT } from '@/lib/visitor-storage';
 
 export default function Branches() {
   const { branches, addBranch, updateBranch, deleteBranch } = useBranch();
@@ -29,12 +30,36 @@ export default function Branches() {
     return Array.from(serviceSet);
   }, [selectedBranch]);
 
+  const [visitorRequests, setVisitorRequests] = useState<VisitorRequest[]>([]);
+
+  useEffect(() => {
+    const refreshVisitorRequests = () => setVisitorRequests(loadVisitorRequests());
+    refreshVisitorRequests();
+    window.addEventListener(VISITOR_REQUESTS_UPDATED_EVENT, refreshVisitorRequests);
+    return () => window.removeEventListener(VISITOR_REQUESTS_UPDATED_EVENT, refreshVisitorRequests);
+  }, []);
+
   const scheduleCards = useMemo(
     () => branches.map(b => ({ id: b.id, morning: b.morning || 'F: 2, A: 2', afternoon: b.afternoon || 'F: 2, A: 2', evening: b.evening || 'F: 1, A: 1' })),
     [branches]
   );
 
-  const distributionData = useMemo(() => branches.map(b => ({ id: b.id, visitors: b.visitors || 0 })), [branches]);
+  const todayKey = new Date().toISOString().slice(0, 10);
+
+  const branchVisitorCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    visitorRequests.forEach((request) => {
+      if (request.createdAt.startsWith(todayKey)) {
+        counts[request.branchId] = (counts[request.branchId] ?? 0) + 1;
+      }
+    });
+    return counts;
+  }, [visitorRequests, todayKey]);
+
+  const distributionData = useMemo(
+    () => branches.map((b) => ({ id: b.id, visitors: branchVisitorCounts[b.id] ?? 0 })),
+    [branches, branchVisitorCounts]
+  );
 
   const maxVisitors = useMemo(
     () => Math.max(...distributionData.map((item) => item.visitors), 1),
@@ -168,7 +193,7 @@ export default function Branches() {
                       <div className="space-y-3 flex-1">
                         <div>
                           <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Today's Visitors</p>
-                          <p className="text-2xl font-bold text-gray-900">{branch.visitors ?? 0}</p>
+                          <p className="text-2xl font-bold text-gray-900">{branchVisitorCounts[branch.id] ?? 0}</p>
                         </div>
                         <div className="grid grid-cols-2 gap-3 pt-3 border-t border-green-300">
                           <div>
@@ -224,25 +249,27 @@ export default function Branches() {
               <section className="h-full min-h-0">
                 <div className="h-full rounded-2xl border border-green-200 bg-white shadow-sm p-6 min-h-0 flex flex-col">
                   <h3 className="text-lg font-semibold text-gray-900 mb-6">Visitor Distribution</h3>
-                  <div className="min-h-[240px] bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl border border-green-200 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 auto-rows-min gap-4 items-end justify-items-center p-4 overflow-hidden">
-                    {distributionData.map((item, i) => {
-                      const branchData = getBranch(item.id);
-                      const percentage = Math.min(100, (item.visitors / maxVisitors) * 100);
-                      return (
-                        <div key={i} className="w-full max-w-[140px] min-h-0 flex flex-col items-center gap-2">
-                          <div className="relative w-full h-28 overflow-hidden rounded-t-2xl bg-white/0 flex items-end">
-                            <div
-                              className="absolute bottom-0 left-0 w-full rounded-t-2xl bg-gradient-to-t from-green-500 to-emerald-400 transition-all duration-300 hover:from-green-600 hover:to-emerald-500"
-                              style={{ height: `${Math.max(18, percentage)}%` }}
-                            />
+                  <div className="mt-2 flex-1 min-h-[320px] overflow-hidden">
+                    <div className="h-full min-h-[320px] bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl border border-green-200 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 auto-rows-fr gap-4 p-4 overflow-hidden">
+                      {distributionData.map((item, i) => {
+                        const branchData = getBranch(item.id);
+                        const percentage = Math.min(100, (item.visitors / maxVisitors) * 100);
+                        return (
+                          <div key={i} className="h-full w-full min-h-0 rounded-3xl border border-green-200 bg-white/80 p-3 shadow-sm flex flex-col justify-between gap-3">
+                            <div className="h-24 overflow-hidden rounded-2xl bg-green-100">
+                              <div
+                                className="h-full w-full rounded-2xl bg-gradient-to-t from-green-500 to-emerald-400 transition-all duration-300 hover:from-green-600 hover:to-emerald-500"
+                                style={{ height: `${Math.max(18, percentage)}%` }}
+                              />
+                            </div>
+                            <div className="text-center min-w-0 overflow-hidden">
+                              <p className="text-xs text-gray-700 font-medium leading-tight break-words whitespace-normal">{branchData?.name ?? item.id}</p>
+                              <p className="text-xs font-bold text-gray-900 whitespace-nowrap">{item.visitors}</p>
+                            </div>
                           </div>
-                          <div className="text-center min-w-0 overflow-hidden">
-                            <p className="text-xs text-gray-700 font-medium leading-tight break-words whitespace-normal">{branchData?.name ?? item.id}</p>
-                            <p className="text-xs font-bold text-gray-900 whitespace-nowrap">{item.visitors}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </section>
