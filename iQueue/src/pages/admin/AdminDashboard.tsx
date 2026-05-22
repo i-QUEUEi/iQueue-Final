@@ -21,7 +21,7 @@ export default function AdminDashboard() {
       label: 'Total visitors',
       value: overview.loading ? 'Loading…' : overview.totalVisitors.toLocaleString(),
       trend: 'up',
-      change: overview.loading ? 'Waiting for live metrics' : '113 base visitors + new requests',
+      change: overview.loading ? 'Waiting for live metrics' : '113 base visitors + confirmed visits',
     },
     {
       label: 'Current congestion',
@@ -39,7 +39,7 @@ export default function AdminDashboard() {
       label: 'Confirmed visits',
       value: overview.loading ? 'Loading…' : overview.confirmedVisits.toLocaleString(),
       trend: 'up',
-      change: overview.loading ? 'Waiting for live metrics' : 'Local visitor requests',
+      change: overview.loading ? 'Waiting for live metrics' : 'Admin-confirmed visitor requests',
     },
   ];
 

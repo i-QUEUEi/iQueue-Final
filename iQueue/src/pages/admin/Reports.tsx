@@ -53,15 +53,6 @@ function getFeedbackStatus(entry: VisitorFeedback) {
   return 'Recorded';
 }
 
-function formatSubmittedAt(value: string) {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-
-  return parsed.toLocaleString();
-}
-
 function getCategoryClasses(category: string) {
   if (category === 'Wait time') {
     return {
@@ -159,10 +150,9 @@ export default function Reports() {
     <>
       <AdminHeader title="Reports" showActions={true} onRefresh={handleRefresh} />
       <div className="flex-1 overflow-y-auto px-8 py-8 space-y-8 pb-8">
-        {/* Reports Summary */}
         <section>
           <div className="mb-4 flex items-center gap-2">
-            <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Today's Reports</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-600">Today's Reports</h2>
             <span className="rounded-full bg-orange-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-700">
               Sample data
             </span>
@@ -172,20 +162,19 @@ export default function Reports() {
               { label: 'Total reports', value: '24', change: '+4 vs daily avg' },
               { label: 'Wait time reports', value: '12', change: 'Most common' },
               { label: 'System issues', value: '3', change: 'All acknowledged' },
-              { label: 'Avg helpfulness', value: '8.2/10', change: 'Community ratings' }
+              { label: 'Avg helpfulness', value: '8.2/10', change: 'Community ratings' },
             ].map((stat, idx) => (
-              <div key={idx} className="rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50 to-red-100 shadow-sm hover:shadow-lg transition-all duration-300 p-6">
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">{stat.label}</p>
+              <div key={idx} className="rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50 to-red-100 p-6 shadow-sm transition-all duration-300 hover:shadow-lg">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-600">{stat.label}</p>
                 <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
-                <p className="text-xs text-gray-700 mt-3">{stat.change}</p>
+                <p className="mt-3 text-xs text-gray-700">{stat.change}</p>
               </div>
             ))}
           </div>
         </section>
 
-        {/* Reports by Category */}
         <section>
-          <div className="rounded-2xl border border-orange-200 bg-white shadow-sm p-6 mb-6">
+          <div className="mb-6 rounded-2xl border border-orange-200 bg-white p-6 shadow-sm">
             <div className="mb-6 flex items-center gap-2">
               <h3 className="text-lg font-semibold text-gray-900">Reports by Category</h3>
               <span className="rounded-full bg-orange-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-700">
@@ -197,26 +186,28 @@ export default function Reports() {
                 { category: 'Wait time', count: 12, color: 'red' },
                 { category: 'Queue issues', count: 6, color: 'orange' },
                 { category: 'System problems', count: 3, color: 'yellow' },
-                { category: 'Other', count: 3, color: 'purple' }
+                { category: 'Other', count: 3, color: 'purple' },
               ].map((item, idx) => (
-                <div key={idx} className={`p-4 rounded-lg text-center border-2 ${
-                  item.color === 'red' ? 'bg-red-50 border-red-300' :
-                  item.color === 'orange' ? 'bg-orange-50 border-orange-300' :
-                  item.color === 'yellow' ? 'bg-yellow-50 border-yellow-300' :
-                  'bg-purple-50 border-purple-300'
-                }`}>
+                <div
+                  key={idx}
+                  className={`rounded-lg border-2 p-4 text-center ${
+                    item.color === 'red' ? 'border-red-300 bg-red-50' :
+                    item.color === 'orange' ? 'border-orange-300 bg-orange-50' :
+                    item.color === 'yellow' ? 'border-yellow-300 bg-yellow-50' :
+                    'border-purple-300 bg-purple-50'
+                  }`}
+                >
                   <p className="text-3xl font-bold text-gray-900">{item.count}</p>
-                  <p className="text-sm font-medium text-gray-700 mt-2">{item.category}</p>
+                  <p className="mt-2 text-sm font-medium text-gray-700">{item.category}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Crowdsourced Reports List */}
         <section>
-          <div className="rounded-2xl border border-orange-200 bg-white shadow-sm p-6">
-            <div className="flex justify-between items-center mb-6">
+          <div className="rounded-2xl border border-orange-200 bg-white p-6 shadow-sm">
+            <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-semibold text-gray-900">Crowdsourced Reports</h3>
                 <span className="rounded-full bg-orange-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-700">
@@ -224,15 +215,15 @@ export default function Reports() {
                 </span>
               </div>
               <div className="flex gap-2">
-                <button className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium transition-colors duration-200">
+                <button className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors duration-200 hover:bg-gray-200">
                   All Types
                 </button>
-                <button className="px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 text-xs font-medium transition-colors duration-200">
+                <button className="rounded-lg bg-red-100 px-3 py-1.5 text-xs font-medium text-red-700 transition-colors duration-200 hover:bg-red-200">
                   Wait Time
                 </button>
               </div>
             </div>
-            <div className="space-y-3 max-h-96 overflow-y-auto pr-2" style={{ scrollbarWidth: 'none' }}>
+            <div className="max-h-96 space-y-3 overflow-y-auto pr-2" style={{ scrollbarWidth: 'none' }}>
               {[
                 { time: '2:45 PM', category: 'Wait time', msg: 'Queue at Window 3 is about 45 minutes.', votes: 23, status: 'Acknowledged' },
                 { time: '2:30 PM', category: 'Queue', msg: 'Lobby overflow into the hallway near restrooms.', votes: 18, status: 'Under review' },
@@ -241,46 +232,55 @@ export default function Reports() {
                 { time: '1:30 PM', category: 'Queue', msg: 'Missing signage for License Plate Issuance.', votes: 8, status: 'Under review' },
                 { time: '1:15 PM', category: 'System', msg: 'Number display board not updating.', votes: 15, status: 'Resolved' },
                 { time: '12:45 PM', category: 'Wait time', msg: 'Expected 20 min wait, now 35 minutes.', votes: 31, status: 'Acknowledged' },
-                { time: '12:20 PM', category: 'Queue', msg: 'Temperature is too high in main lobby.', votes: 7, status: 'Forwarded' }
+                { time: '12:20 PM', category: 'Queue', msg: 'Temperature is too high in main lobby.', votes: 7, status: 'Forwarded' },
               ].map((report, idx) => (
-                <div key={idx} className={`p-4 rounded-lg border-l-4 ${
-                  report.category === 'Wait time' ? 'bg-red-50 border-red-400' :
-                  report.category === 'Queue' ? 'bg-orange-50 border-orange-400' :
-                  report.category === 'System' ? 'bg-yellow-50 border-yellow-400' :
-                  'bg-purple-50 border-purple-400'
-                }`}>
-                  <div className="flex justify-between items-start mb-2">
+                <div
+                  key={idx}
+                  className={`rounded-lg border-l-4 p-4 ${
+                    report.category === 'Wait time' ? 'border-red-400 bg-red-50' :
+                    report.category === 'Queue' ? 'border-orange-400 bg-orange-50' :
+                    report.category === 'System' ? 'border-yellow-400 bg-yellow-50' :
+                    'border-purple-400 bg-purple-50'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className={`text-xs font-bold px-2 py-1 rounded ${
-                          report.category === 'Wait time' ? 'bg-red-200 text-red-700' :
-                          report.category === 'Queue' ? 'bg-orange-200 text-orange-700' :
-                          report.category === 'System' ? 'bg-yellow-200 text-yellow-700' :
-                          'bg-purple-200 text-purple-700'
-                        }`}>
+                        <p
+                          className={`rounded px-2 py-1 text-xs font-bold ${
+                            report.category === 'Wait time' ? 'bg-red-200 text-red-700' :
+                            report.category === 'Queue' ? 'bg-orange-200 text-orange-700' :
+                            report.category === 'System' ? 'bg-yellow-200 text-yellow-700' :
+                            'bg-purple-200 text-purple-700'
+                          }`}
+                        >
                           {report.category}
                         </p>
-                        <p className={`text-xs font-semibold px-2 py-1 rounded ${
-                          report.status === 'Resolved' ? 'bg-green-200 text-green-700' :
-                          report.status === 'Acknowledged' ? 'bg-blue-200 text-blue-700' :
-                          report.status === 'Under review' ? 'bg-yellow-200 text-yellow-700' :
-                          'bg-purple-200 text-purple-700'
-                        }`}>
+                        <p
+                          className={`rounded px-2 py-1 text-xs font-semibold ${
+                            report.status === 'Resolved' ? 'bg-green-200 text-green-700' :
+                            report.status === 'Acknowledged' ? 'bg-blue-200 text-blue-700' :
+                            report.status === 'Under review' ? 'bg-yellow-200 text-yellow-700' :
+                            'bg-purple-200 text-purple-700'
+                          }`}
+                        >
                           {report.status}
                         </p>
                       </div>
-                      <p className={`text-sm mt-2 ${
-                        report.category === 'Wait time' ? 'text-red-900' :
-                        report.category === 'Queue' ? 'text-orange-900' :
-                        report.category === 'System' ? 'text-yellow-900' :
-                        'text-purple-900'
-                      }`}>
+                      <p
+                        className={`mt-2 text-sm ${
+                          report.category === 'Wait time' ? 'text-red-900' :
+                          report.category === 'Queue' ? 'text-orange-900' :
+                          report.category === 'System' ? 'text-yellow-900' :
+                          'text-purple-900'
+                        }`}
+                      >
                         {report.msg}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-gray-600">{report.time}</p>
-                      <p className="text-xs font-bold text-gray-700 mt-1">{report.votes} helpful</p>
+                      <p className="mt-1 text-xs font-bold text-gray-700">{report.votes} helpful</p>
                     </div>
                   </div>
                 </div>
@@ -290,7 +290,7 @@ export default function Reports() {
         </section>
 
         <section>
-          <div className="rounded-2xl border border-sky-200 bg-white shadow-sm p-6">
+          <div className="rounded-2xl border border-sky-200 bg-white p-6 shadow-sm">
             <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <div className="flex items-center gap-2">
@@ -334,28 +334,43 @@ export default function Reports() {
             </div>
 
             {branchFeedback.length ? (
-              <div className="space-y-4 max-h-[560px] overflow-y-auto pr-2" style={{ scrollbarWidth: 'none' }}>
+              <div className="max-h-[560px] space-y-4 overflow-y-auto pr-2" style={{ scrollbarWidth: 'none' }}>
                 {branchFeedback.map((entry) => {
                   const category = getFeedbackCategory(entry);
                   const status = getFeedbackStatus(entry);
                   const categoryClasses = getCategoryClasses(category);
                   const systemIssueText = hasMeaningfulSystemIssue(entry.systemIssue) ? entry.systemIssue : 'None reported';
                   const notes = entry.comments?.trim();
+                  const submittedAt = new Date(entry.submittedAt);
+                  const submittedLabel = Number.isNaN(submittedAt.getTime())
+                    ? entry.submittedAt
+                    : submittedAt.toLocaleString();
 
                   return (
                     <div key={entry.id} className={`rounded-xl border p-5 ${categoryClasses.accent}`}>
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className={`rounded-full px-3 py-1 text-xs font-bold ${categoryClasses.badge}`}>
-                              {category}
-                            </span>
-                            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(status)}`}>
-                              {status}
-                            </span>
-                            <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-600">
-                              {entry.office}
-                            </span>
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className={`rounded-full px-3 py-1 text-xs font-bold ${categoryClasses.badge}`}>
+                                {category}
+                              </span>
+                              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(status)}`}>
+                                {status}
+                              </span>
+                              <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-600">
+                                {entry.office}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteFeedback(entry.id)}
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-sm font-bold text-slate-500 transition hover:bg-red-500 hover:text-white"
+                              aria-label="Delete feedback"
+                              title="Delete"
+                            >
+                              ×
+                            </button>
                           </div>
 
                           <p className={`mt-3 text-sm ${categoryClasses.text}`}>
@@ -379,23 +394,15 @@ export default function Reports() {
                               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Prediction match</p>
                               <p className="mt-1 font-medium text-slate-900">{entry.predictionMatch || 'N/A'}</p>
                             </div>
-                            <div className="rounded-lg bg-white/80 p-3 md:col-span-2 xl:col-span-2">
+                            <div className="rounded-lg bg-white/80 p-3">
                               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">System issue</p>
                               <p className="mt-1 font-medium text-slate-900">{systemIssueText}</p>
                             </div>
+                            <div className="rounded-lg bg-white/80 p-3">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Submitted</p>
+                              <p className="mt-1 font-medium text-slate-900">{submittedLabel}</p>
+                            </div>
                           </div>
-                        </div>
-
-                        <div className="shrink-0 rounded-lg bg-white/80 px-4 py-3 text-right text-xs text-slate-500">
-                          <p className="font-semibold uppercase tracking-wide text-slate-600">Submitted</p>
-                          <p className="mt-1 text-sm font-medium text-slate-900">{formatSubmittedAt(entry.submittedAt)}</p>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteFeedback(entry.id)}
-                            className="mt-4 inline-flex items-center justify-center rounded-full bg-red-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700"
-                          >
-                            Delete
-                          </button>
                         </div>
                       </div>
                     </div>
@@ -410,22 +417,21 @@ export default function Reports() {
           </div>
         </section>
 
-        {/* Quick Actions */}
         <section>
-          <div className="rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50 to-red-100 shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <div className="rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50 to-red-100 p-6 shadow-sm">
+            <h3 className="mb-4 text-lg font-semibold text-gray-900">Quick Actions</h3>
             <div className="grid grid-cols-3 gap-3">
               {[
                 { action: 'Acknowledge Wait Time Reports', count: '2 pending' },
                 { action: 'Review System Issues', count: '1 pending' },
-                { action: 'Forward Facility Reports', count: '0 pending' }
+                { action: 'Forward Facility Reports', count: '0 pending' },
               ].map((item, idx) => (
                 <button
                   key={idx}
-                  className="p-4 rounded-lg bg-white border border-orange-300 hover:bg-orange-50 transition-colors duration-200 text-left"
+                  className="rounded-lg border border-orange-300 bg-white p-4 text-left transition-colors duration-200 hover:bg-orange-50"
                 >
-                  <p className="font-medium text-gray-900 text-sm">{item.action}</p>
-                  <p className="text-xs text-orange-600 font-semibold mt-2">{item.count}</p>
+                  <p className="text-sm font-medium text-gray-900">{item.action}</p>
+                  <p className="mt-2 text-xs font-semibold text-orange-600">{item.count}</p>
                 </button>
               ))}
             </div>

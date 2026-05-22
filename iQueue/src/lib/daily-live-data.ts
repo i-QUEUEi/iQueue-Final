@@ -105,7 +105,7 @@ function buildBaseDailyLiveData(
     date: todayKey,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    totalVisitors: BASELINE_CURRENT_VISITORS + todayRequests.length,
+    totalVisitors: BASELINE_CURRENT_VISITORS + confirmedVisits,
     confirmedVisits,
     pendingVisits,
     feedbackCount: todayFeedback.length,
