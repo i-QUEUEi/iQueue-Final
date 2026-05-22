@@ -54,6 +54,10 @@ function dispatchUpdateEvent(eventName: string) {
   window.dispatchEvent(new Event(eventName));
 }
 
+function isVisitorStorageKey(key: string | null) {
+  return key === VISITOR_REQUESTS_KEY || key === VISITOR_FEEDBACK_KEY;
+}
+
 function savePersisted<T>(key: string, items: T[]) {
   if (typeof window === 'undefined') return;
   window.localStorage.setItem(key, JSON.stringify(items));
@@ -91,4 +95,26 @@ export function saveVisitorFeedback(feedback: VisitorFeedback[]) {
 export function addVisitorFeedback(entry: VisitorFeedback) {
   const feedback = loadVisitorFeedback();
   saveVisitorFeedback([...feedback, entry]);
+}
+
+export function subscribeToVisitorStorageChanges(listener: () => void) {
+  if (typeof window === 'undefined') {
+    return () => undefined;
+  }
+
+  const handleStorage = (event: StorageEvent) => {
+    if (event.storageArea !== window.localStorage) return;
+    if (!isVisitorStorageKey(event.key)) return;
+    listener();
+  };
+
+  window.addEventListener(VISITOR_REQUESTS_UPDATED_EVENT, listener);
+  window.addEventListener(VISITOR_FEEDBACK_UPDATED_EVENT, listener);
+  window.addEventListener('storage', handleStorage);
+
+  return () => {
+    window.removeEventListener(VISITOR_REQUESTS_UPDATED_EVENT, listener);
+    window.removeEventListener(VISITOR_FEEDBACK_UPDATED_EVENT, listener);
+    window.removeEventListener('storage', handleStorage);
+  };
 }

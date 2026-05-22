@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useBranch } from '@/lib/branch-context';
 import Footer from '@/components/layout/Footer';
 import {
@@ -38,6 +38,7 @@ export default function LandingPage() {
   const [announcementLoading, setAnnouncementLoading] = useState(true);
   const [announcementError, setAnnouncementError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState('');
+  const [statusTone, setStatusTone] = useState<'success' | 'error'>('success');
   const overview = useTodayAtAGlance();
   const [heroVisible, setHeroVisible] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
@@ -224,6 +225,7 @@ export default function LandingPage() {
       !visitForm.visitDate ||
       !visitForm.visitTime
     ) {
+      setStatusTone('error');
       setStatusMessage('Please complete all required fields for your visit request.');
       return;
     }
@@ -247,6 +249,7 @@ export default function LandingPage() {
     addVisitorRequest(newRequest);
     setVisitorRequests((current) => [newRequest, ...current]);
     setVisitModalOpen(false);
+    setStatusTone('success');
     setStatusMessage('Your visit request was submitted. Admin can now review it.');
     resetVisitForm();
   };
@@ -254,6 +257,7 @@ export default function LandingPage() {
   const handleFeedbackSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!feedbackForm.office || !feedbackForm.branchId || !feedbackForm.date || !feedbackForm.time) {
+      setStatusTone('error');
       setStatusMessage('Please complete the required feedback fields before submitting.');
       return;
     }
@@ -278,6 +282,7 @@ export default function LandingPage() {
     addVisitorFeedback(newFeedback);
     setVisitorFeedback((current) => [newFeedback, ...current]);
     setFeedbackModalOpen(false);
+    setStatusTone('success');
     setStatusMessage('Thank you! Your feedback has been recorded.');
     resetFeedbackForm();
   };
@@ -286,6 +291,38 @@ export default function LandingPage() {
     <div className="min-h-screen bg-slate-50 text-slate-900" style={{ fontFamily: "'Product Sans', 'Google Sans', sans-serif" }}>
 
       {/* ── Header ── */}
+      {statusMessage ? (
+        <div className="fixed right-4 top-20 z-[70] w-[min(92vw,26rem)]">
+          <div
+            className={`flex items-start gap-3 rounded-3xl border px-4 py-4 shadow-xl backdrop-blur-sm ${
+              statusTone === 'success'
+                ? 'border-emerald-200 bg-emerald-50/95 text-emerald-900'
+                : 'border-rose-200 bg-rose-50/95 text-rose-900'
+            }`}
+            role="status"
+            aria-live="polite"
+          >
+            {statusTone === 'success' ? (
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
+            ) : (
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold">
+                {statusTone === 'success' ? 'Submission received' : 'Please check your form'}
+              </p>
+              <p className="mt-1 text-sm leading-6">{statusMessage}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setStatusMessage('')}
+              className="rounded-full px-2 py-1 text-xs font-semibold transition hover:bg-black/5"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      ) : null}
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">

@@ -3,7 +3,7 @@ import AdminHeader from '@/components/admin/AdminHeader';
 import BranchOnboardingNotice from '@/components/admin/BranchOnboardingNotice';
 import { useBranch } from '@/lib/branch-context';
 import { useBranchData } from '@/lib/use-branch-data';
-import { loadVisitorRequests, saveVisitorRequests } from '@/lib/visitor-storage';
+import { loadVisitorRequests, saveVisitorRequests, subscribeToVisitorStorageChanges } from '@/lib/visitor-storage';
 import type { VisitorRequest } from '@/lib/visitor-storage';
 
 export default function Visits() {
@@ -12,7 +12,9 @@ export default function Visits() {
   const [visitorRequests, setVisitorRequests] = useState<VisitorRequest[]>([]);
 
   useEffect(() => {
-    setVisitorRequests(loadVisitorRequests());
+    const refreshVisitorRequests = () => setVisitorRequests(loadVisitorRequests());
+    refreshVisitorRequests();
+    return subscribeToVisitorStorageChanges(refreshVisitorRequests);
   }, []);
 
   const branchRequests = useMemo(

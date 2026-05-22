@@ -10,10 +10,9 @@ import {
 import {
   loadVisitorFeedback,
   loadVisitorRequests,
+  subscribeToVisitorStorageChanges,
   type VisitorFeedback,
   type VisitorRequest,
-  VISITOR_FEEDBACK_UPDATED_EVENT,
-  VISITOR_REQUESTS_UPDATED_EVENT,
 } from './visitor-storage';
 import {
   computeAndSaveTodayLiveData,
@@ -82,14 +81,7 @@ export function useTodayAtAGlance() {
     };
 
     refreshLocalData();
-
-    window.addEventListener(VISITOR_REQUESTS_UPDATED_EVENT, refreshLocalData);
-    window.addEventListener(VISITOR_FEEDBACK_UPDATED_EVENT, refreshLocalData);
-
-    return () => {
-      window.removeEventListener(VISITOR_REQUESTS_UPDATED_EVENT, refreshLocalData);
-      window.removeEventListener(VISITOR_FEEDBACK_UPDATED_EVENT, refreshLocalData);
-    };
+    return subscribeToVisitorStorageChanges(refreshLocalData);
   }, []);
 
   useEffect(() => {

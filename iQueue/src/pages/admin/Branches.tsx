@@ -4,7 +4,7 @@ import { useBranch } from '@/lib/branch-context';
 import { getBranch } from '@/lib/branches';
 import BranchModal from '@/components/admin/BranchModal';
 import { useBranchData } from '@/lib/use-branch-data';
-import { loadVisitorRequests, type VisitorRequest, VISITOR_REQUESTS_UPDATED_EVENT } from '@/lib/visitor-storage';
+import { loadVisitorRequests, subscribeToVisitorStorageChanges, type VisitorRequest } from '@/lib/visitor-storage';
 
 export default function Branches() {
   const { branches, addBranch, updateBranch, deleteBranch } = useBranch();
@@ -35,8 +35,7 @@ export default function Branches() {
   useEffect(() => {
     const refreshVisitorRequests = () => setVisitorRequests(loadVisitorRequests());
     refreshVisitorRequests();
-    window.addEventListener(VISITOR_REQUESTS_UPDATED_EVENT, refreshVisitorRequests);
-    return () => window.removeEventListener(VISITOR_REQUESTS_UPDATED_EVENT, refreshVisitorRequests);
+    return subscribeToVisitorStorageChanges(refreshVisitorRequests);
   }, []);
 
   const scheduleCards = useMemo(
