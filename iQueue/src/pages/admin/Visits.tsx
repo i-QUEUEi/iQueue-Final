@@ -3,7 +3,7 @@ import AdminHeader from '@/components/admin/AdminHeader';
 import BranchOnboardingNotice from '@/components/admin/BranchOnboardingNotice';
 import { useBranch } from '@/lib/branch-context';
 import { useBranchData } from '@/lib/use-branch-data';
-import { loadVisitorRequests } from '@/lib/visitor-storage';
+import { loadVisitorRequests, saveVisitorRequests } from '@/lib/visitor-storage';
 import type { VisitorRequest } from '@/lib/visitor-storage';
 
 export default function Visits() {
@@ -26,6 +26,15 @@ export default function Visits() {
 
   const handleRefresh = () => {
     window.location.reload();
+  };
+
+  const handleConfirmRequest = (requestId: string) => {
+    const updatedRequests = visitorRequests.map((request) =>
+      request.id === requestId ? ({ ...request, status: 'confirmed' } as VisitorRequest) : request
+    );
+
+    saveVisitorRequests(updatedRequests);
+    setVisitorRequests(updatedRequests);
   };
 
   if (!hasBranchData) {
@@ -85,6 +94,7 @@ export default function Visits() {
                       <th className="py-3 px-4 text-left font-semibold text-slate-700">Service</th>
                       <th className="py-3 px-4 text-left font-semibold text-slate-700">Contact</th>
                       <th className="py-3 px-4 text-left font-semibold text-slate-700">Status</th>
+                      <th className="py-3 px-4 text-left font-semibold text-slate-700">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
@@ -102,6 +112,19 @@ export default function Visits() {
                           }`}>
                             {visit.status}
                           </span>
+                        </td>
+                        <td className="py-4 px-4">
+                          {visit.status === 'pending' ? (
+                            <button
+                              type="button"
+                              onClick={() => handleConfirmRequest(visit.id)}
+                              className="inline-flex items-center justify-center rounded-full bg-blue-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700"
+                            >
+                              Confirm
+                            </button>
+                          ) : (
+                            <span className="text-xs text-slate-500">—</span>
+                          )}
                         </td>
                       </tr>
                     ))}
