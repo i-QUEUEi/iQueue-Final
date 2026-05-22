@@ -26,7 +26,7 @@ export default function Forecast() {
           <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Tomorrow's Forecast</h2>
           <div className="grid grid-cols-4 gap-4">
             {[
-              { label: 'Expected visitors', value: '1,380', change: '+11% vs average' },
+              { label: 'Expected visitors', value: '130', change: '+11% vs average' },
               { label: 'Peak hour', value: '10–11 AM', change: 'Prepare staffing ahead' },
               { label: 'Predicted congestion', value: 'High', change: 'Spillover seating needed' },
               { label: 'Recommended actions', value: '3', change: 'View AI recommendations' }

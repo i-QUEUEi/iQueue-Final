@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import AdminHeader from '@/components/admin/AdminHeader';
 import BranchOnboardingNotice from '@/components/admin/BranchOnboardingNotice';
 import { useBranchData } from '@/lib/use-branch-data';
@@ -93,9 +93,13 @@ function getStatusClasses(status: string) {
   return 'bg-emerald-200 text-emerald-700';
 }
 
+type QuickActionKey = 'all' | 'wait-time' | 'system-issues' | 'visitor-notes';
+
 export default function Reports() {
   const { branch } = useBranchData();
   const [visitorFeedback, setVisitorFeedback] = useState<VisitorFeedback[]>([]);
+  const [activeQuickAction, setActiveQuickAction] = useState<QuickActionKey>('all');
+  const feedbackSectionRef = useRef<HTMLElement | null>(null);
 
   const handleRefresh = () => {
     window.location.reload();
@@ -136,6 +140,45 @@ export default function Reports() {
 
     return { total, systemIssues, predictionGaps, withNotes, averageWait, waitResponses: waitMinutes.length };
   }, [branchFeedback]);
+
+  const quickActionCounts = useMemo(() => {
+    const waitTime = branchFeedback.filter((entry) => getFeedbackCategory(entry) === 'Wait time').length;
+    const systemIssues = branchFeedback.filter((entry) => hasMeaningfulSystemIssue(entry.systemIssue)).length;
+    const visitorNotes = branchFeedback.filter((entry) => Boolean(entry.comments?.trim())).length;
+
+    return { waitTime, systemIssues, visitorNotes };
+  }, [branchFeedback]);
+
+  const filteredFeedback = useMemo(() => {
+    switch (activeQuickAction) {
+      case 'wait-time':
+        return branchFeedback.filter((entry) => getFeedbackCategory(entry) === 'Wait time');
+      case 'system-issues':
+        return branchFeedback.filter((entry) => hasMeaningfulSystemIssue(entry.systemIssue));
+      case 'visitor-notes':
+        return branchFeedback.filter((entry) => Boolean(entry.comments?.trim()));
+      default:
+        return branchFeedback;
+    }
+  }, [activeQuickAction, branchFeedback]);
+
+  const activeQuickActionLabel = useMemo(() => {
+    switch (activeQuickAction) {
+      case 'wait-time':
+        return 'Wait Time Reports';
+      case 'system-issues':
+        return 'System Issues';
+      case 'visitor-notes':
+        return 'Visitor Notes';
+      default:
+        return 'All Feedback';
+    }
+  }, [activeQuickAction]);
+
+  const handleQuickAction = (action: QuickActionKey) => {
+    setActiveQuickAction(action);
+    feedbackSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   if (!branch) {
     return (
@@ -289,7 +332,7 @@ export default function Reports() {
           </div>
         </section>
 
-        <section>
+        <section ref={feedbackSectionRef}>
           <div className="rounded-2xl border border-sky-200 bg-white p-6 shadow-sm">
             <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
@@ -306,6 +349,24 @@ export default function Reports() {
               <div className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-slate-600">
                 {branch.name}
               </div>
+            </div>
+
+            <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Active View</p>
+                <p className="mt-1 text-sm font-medium text-slate-900">
+                  {activeQuickActionLabel} ({filteredFeedback.length})
+                </p>
+              </div>
+              {activeQuickAction !== 'all' ? (
+                <button
+                  type="button"
+                  onClick={() => handleQuickAction('all')}
+                  className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100"
+                >
+                  Show all feedback
+                </button>
+              ) : null}
             </div>
 
             <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -333,9 +394,9 @@ export default function Reports() {
               </div>
             </div>
 
-            {branchFeedback.length ? (
+            {filteredFeedback.length ? (
               <div className="max-h-[560px] space-y-4 overflow-y-auto pr-2" style={{ scrollbarWidth: 'none' }}>
-                {branchFeedback.map((entry) => {
+                {filteredFeedback.map((entry) => {
                   const category = getFeedbackCategory(entry);
                   const status = getFeedbackStatus(entry);
                   const categoryClasses = getCategoryClasses(category);
@@ -411,7 +472,9 @@ export default function Reports() {
               </div>
             ) : (
               <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-12 text-center text-sm text-slate-600">
-                No submitted feedback yet for this branch. Use the landing page&apos;s <span className="font-semibold text-slate-900">Submit Your Feedback</span> form and it will appear here.
+                {branchFeedback.length
+                  ? <>No feedback matches the current quick action. Use <span className="font-semibold text-slate-900">Show all feedback</span> to clear the filter.</>
+                  : <>No submitted feedback yet for this branch. Use the landing page&apos;s <span className="font-semibold text-slate-900">Submit Your Feedback</span> form and it will appear here.</>}
               </div>
             )}
           </div>
@@ -422,16 +485,25 @@ export default function Reports() {
             <h3 className="mb-4 text-lg font-semibold text-gray-900">Quick Actions</h3>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { action: 'Acknowledge Wait Time Reports', count: '2 pending' },
-                { action: 'Review System Issues', count: '1 pending' },
-                { action: 'Forward Facility Reports', count: '0 pending' },
+                { key: 'wait-time' as const, action: 'Acknowledge Wait Time Reports', count: quickActionCounts.waitTime, detail: 'Focus visitor entries about queue duration.' },
+                { key: 'system-issues' as const, action: 'Review System Issues', count: quickActionCounts.systemIssues, detail: 'Jump to entries that flagged an issue.' },
+                { key: 'visitor-notes' as const, action: 'Review Visitor Notes', count: quickActionCounts.visitorNotes, detail: 'Open feedback that includes extra notes.' },
               ].map((item, idx) => (
                 <button
                   key={idx}
-                  className="rounded-lg border border-orange-300 bg-white p-4 text-left transition-colors duration-200 hover:bg-orange-50"
+                  type="button"
+                  onClick={() => handleQuickAction(item.key)}
+                  className={`rounded-lg border p-4 text-left transition-colors duration-200 ${
+                    activeQuickAction === item.key
+                      ? 'border-orange-500 bg-orange-100'
+                      : 'border-orange-300 bg-white hover:bg-orange-50'
+                  }`}
                 >
                   <p className="text-sm font-medium text-gray-900">{item.action}</p>
-                  <p className="mt-2 text-xs font-semibold text-orange-600">{item.count}</p>
+                  <p className="mt-2 text-xs text-gray-600">{item.detail}</p>
+                  <p className="mt-3 text-xs font-semibold text-orange-600">
+                    {item.count} {item.count === 1 ? 'entry' : 'entries'}
+                  </p>
                 </button>
               ))}
             </div>
