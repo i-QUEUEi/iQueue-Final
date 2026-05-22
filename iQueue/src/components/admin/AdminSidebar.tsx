@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { AdminPageType } from '@/pages/admin/AdminLayout';
+import { useNavigate } from 'react-router-dom';
 import {
   exportAnalyticsCsv,
   exportBranchesCsv,
@@ -62,6 +63,7 @@ export default function AdminSidebar({ activePage, onPageChange }: AdminSidebarP
   const [collapsed, setCollapsed] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const exportRef = useRef<HTMLDivElement | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -626,13 +628,13 @@ export default function AdminSidebar({ activePage, onPageChange }: AdminSidebarP
             <button
               className="sidebar-logout-btn"
               title="Logout" aria-label="Logout"
-              onClick={() => window.location.href = '/'}
+              onClick={() => navigate('/')}
             >
               <span className="material-symbols-rounded">logout</span>
             </button>
           </div>
           <div className="sidebar-footer-collapsed-logout">
-            <button title="Logout" aria-label="Logout" onClick={() => window.location.href = '/'}>
+            <button title="Logout" aria-label="Logout" onClick={() => navigate('/')}>
               <span className="material-symbols-rounded">logout</span>
             </button>
           </div>

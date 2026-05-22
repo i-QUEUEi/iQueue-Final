@@ -3,6 +3,8 @@ const DEFAULT_API_BASE_URL = 'http://localhost:5000/api';
 const configuredBaseUrl = (import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL).replace(/\/+$/, '');
 const API_BASE_URL = configuredBaseUrl.endsWith('/api') ? configuredBaseUrl : `${configuredBaseUrl}/api`;
 const SERVICE_BASE_URL = API_BASE_URL.replace(/\/api$/, '');
+const responseCache = new Map<string, unknown>();
+const pendingResponseCache = new Map<string, Promise<unknown>>();
 
 export type WeeklyForecastDay = {
   date: string;
@@ -144,6 +146,36 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+async function fetchCachedJson<T>(cacheKey: string, path: string): Promise<T> {
+  if (responseCache.has(cacheKey)) {
+    return responseCache.get(cacheKey) as T;
+  }
+
+  const pendingRequest = pendingResponseCache.get(cacheKey) as Promise<T> | undefined;
+  if (pendingRequest) {
+    return pendingRequest;
+  }
+
+  const request = fetchJson<T>(path)
+    .then((data) => {
+      responseCache.set(cacheKey, data);
+      pendingResponseCache.delete(cacheKey);
+      return data;
+    })
+    .catch((error) => {
+      pendingResponseCache.delete(cacheKey);
+      throw error;
+    });
+
+  pendingResponseCache.set(cacheKey, request as Promise<unknown>);
+  return request;
+}
+
+function invalidateCachedRequest(cacheKey: string) {
+  responseCache.delete(cacheKey);
+  pendingResponseCache.delete(cacheKey);
+}
+
 export function getApiBaseUrl() {
   return API_BASE_URL;
 }
@@ -157,27 +189,28 @@ export function fetchInfo() {
 }
 
 export function fetchModelPerformance() {
-  return fetchJson<ModelPerformanceResponse>('/api/model-performance');
+  return fetchCachedJson<ModelPerformanceResponse>('/api/model-performance', '/api/model-performance');
 }
 
 export function fetchHistoricalAnalytics() {
-  return fetchJson<HistoricalAnalyticsResponse>('/api/historical-analytics');
+  return fetchCachedJson<HistoricalAnalyticsResponse>('/api/historical-analytics', '/api/historical-analytics');
 }
 
 export function fetchPredictiveAnalytics() {
-  return fetchJson<PredictiveAnalyticsResponse>('/api/predictive-analytics');
+  return fetchCachedJson<PredictiveAnalyticsResponse>('/api/predictive-analytics', '/api/predictive-analytics');
 }
 
 export function fetchDatasetSummary() {
-  return fetchJson<DatasetSummaryResponse>('/api/dataset-summary');
+  return fetchCachedJson<DatasetSummaryResponse>('/api/dataset-summary', '/api/dataset-summary');
 }
 
 export function fetchWeeklyForecast(date: string) {
-  return fetchJson<WeeklyForecastResponse>(`/api/weekly-forecast?date=${encodeURIComponent(date)}`);
+  const path = `/api/weekly-forecast?date=${encodeURIComponent(date)}`;
+  return fetchCachedJson<WeeklyForecastResponse>(path, path);
 }
 
 export function fetchAnnouncements() {
-  return fetchJson<{ announcements: Announcement[] }>('/api/announcements');
+  return fetchCachedJson<{ announcements: Announcement[] }>('/api/announcements', '/api/announcements');
 }
 
 export function createAnnouncement(payload: Omit<Announcement, 'id'> & { id?: string }) {
@@ -185,6 +218,9 @@ export function createAnnouncement(payload: Omit<Announcement, 'id'> & { id?: st
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
+  }).then((announcement) => {
+    invalidateCachedRequest('/api/announcements');
+    return announcement;
   });
 }
 
@@ -193,11 +229,17 @@ export function updateAnnouncement(id: string, payload: Omit<Announcement, 'id'>
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
+  }).then((announcement) => {
+    invalidateCachedRequest('/api/announcements');
+    return announcement;
   });
 }
 
 export function deleteAnnouncement(id: string) {
   return fetchJson<{ deleted: boolean; id: string }>(`/api/announcements/${encodeURIComponent(id)}`, {
     method: 'DELETE',
+  }).then((result) => {
+    invalidateCachedRequest('/api/announcements');
+    return result;
   });
 }
