@@ -3,6 +3,7 @@ import {
   fetchDatasetSummary,
   fetchHistoricalAnalytics,
   fetchPredictiveAnalytics,
+  fetchWeeklyForecast,
   type DatasetSummaryResponse,
   type HistoricalAnalyticsResponse,
   type PredictiveAnalyticsResponse,
@@ -28,10 +29,27 @@ interface DailyAnalyticsSnapshot {
   datasetSummary: DatasetSummaryResponse | null;
   historicalAnalytics: HistoricalAnalyticsResponse | null;
   predictiveAnalytics: PredictiveAnalyticsResponse | null;
+  forecastCongestion: string | null;
 }
 
 function getTodayKey() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function getLocalDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getMondayOfWeek(date: Date) {
+  const next = new Date(date);
+  const day = next.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  next.setDate(next.getDate() + diff);
+  next.setHours(0, 0, 0, 0);
+  return next;
 }
 
 function loadDailyAnalyticsHistory(): DailyAnalyticsSnapshot[] {
@@ -64,9 +82,35 @@ function getAverageHistoricalWait(historical: HistoricalAnalyticsResponse | null
   return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
 }
 
+function formatCongestionLabel(value: string | null | undefined) {
+  if (!value) return null;
+  const normalized = value.trim();
+  if (!normalized) return null;
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1).toLowerCase();
+}
+
+function getForecastDayKey(value: string) {
+  const parsed = new Date(value);
+  if (!Number.isNaN(parsed.getTime())) {
+    return getLocalDateKey(parsed);
+  }
+
+  const normalized = value.trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(normalized) ? normalized : null;
+}
+
+function getTodayForecastCongestion(
+  todayKey: string,
+  forecastDays: Array<{ date: string; congestion: string }> | undefined
+) {
+  const todayForecast = forecastDays?.find((day) => getForecastDayKey(day.date) === todayKey);
+  return formatCongestionLabel(todayForecast?.congestion);
+}
+
 export function useTodayAtAGlance() {
   const [historicalAnalytics, setHistoricalAnalytics] = useState<HistoricalAnalyticsResponse | null>(null);
   const [predictiveAnalytics, setPredictiveAnalytics] = useState<PredictiveAnalyticsResponse | null>(null);
+  const [forecastCongestion, setForecastCongestion] = useState<string | null>(null);
   const [visitorRequests, setVisitorRequests] = useState<VisitorRequest[]>([]);
   const [visitorFeedback, setVisitorFeedback] = useState<VisitorFeedback[]>([]);
   const [dailyLiveData, setDailyLiveData] = useState<DailyLiveDataRecord | null>(null);
@@ -103,6 +147,8 @@ export function useTodayAtAGlance() {
   useEffect(() => {
     let cancelled = false;
     const todayKey = getTodayKey();
+    const todayLocalKey = getLocalDateKey(new Date());
+    const mondayKey = getLocalDateKey(getMondayOfWeek(new Date()));
     const history = loadDailyAnalyticsHistory();
     const todaySnapshot = history.find((entry) => entry.date === todayKey);
 
@@ -110,18 +156,23 @@ export function useTodayAtAGlance() {
       if (todaySnapshot) {
         setHistoricalAnalytics(todaySnapshot.historicalAnalytics);
         setPredictiveAnalytics(todaySnapshot.predictiveAnalytics);
+        setForecastCongestion(todaySnapshot.forecastCongestion);
       }
 
       try {
-        const [datasetResponse, historicalResponse, predictiveResponse] = await Promise.all([
+        const [datasetResponse, historicalResponse, predictiveResponse, weeklyForecastResponse] = await Promise.all([
           fetchDatasetSummary(),
           fetchHistoricalAnalytics(),
           fetchPredictiveAnalytics(),
+          fetchWeeklyForecast(mondayKey),
         ]);
+
+        const nextForecastCongestion = getTodayForecastCongestion(todayLocalKey, weeklyForecastResponse.days);
 
         if (!cancelled) {
           setHistoricalAnalytics(historicalResponse);
           setPredictiveAnalytics(predictiveResponse);
+          setForecastCongestion(nextForecastCongestion);
 
           addOrReplaceSnapshot({
             date: todayKey,
@@ -129,6 +180,7 @@ export function useTodayAtAGlance() {
             datasetSummary: datasetResponse,
             historicalAnalytics: historicalResponse,
             predictiveAnalytics: predictiveResponse,
+            forecastCongestion: nextForecastCongestion,
           });
         }
       } catch (err) {
@@ -156,7 +208,10 @@ export function useTodayAtAGlance() {
 
   const defaultAverageWait = 18;
   const averageWait = dailyLiveData?.averageWait ?? getAverageHistoricalWait(historicalAnalytics, defaultAverageWait);
-  const currentCongestion = dailyLiveData?.currentCongestion ?? predictiveAnalytics?.predictions?.afternoon?.congestion ?? 'Moderate';
+  const currentCongestion = forecastCongestion
+    ?? formatCongestionLabel(dailyLiveData?.currentCongestion)
+    ?? formatCongestionLabel(predictiveAnalytics?.predictions?.afternoon?.congestion)
+    ?? 'Moderate';
 
   return {
     loading,
