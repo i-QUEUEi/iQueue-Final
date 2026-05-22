@@ -33,6 +33,8 @@ export interface VisitorFeedback {
 
 const VISITOR_REQUESTS_KEY = 'visitorRequests';
 const VISITOR_FEEDBACK_KEY = 'visitorFeedback';
+export const VISITOR_REQUESTS_UPDATED_EVENT = 'visitorRequestsUpdated';
+export const VISITOR_FEEDBACK_UPDATED_EVENT = 'visitorFeedbackUpdated';
 
 function loadPersisted<T>(key: string): T[] {
   if (typeof window === 'undefined') return [];
@@ -47,9 +49,22 @@ function loadPersisted<T>(key: string): T[] {
   }
 }
 
+function dispatchUpdateEvent(eventName: string) {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event(eventName));
+}
+
 function savePersisted<T>(key: string, items: T[]) {
   if (typeof window === 'undefined') return;
   window.localStorage.setItem(key, JSON.stringify(items));
+
+  if (key === VISITOR_REQUESTS_KEY) {
+    dispatchUpdateEvent(VISITOR_REQUESTS_UPDATED_EVENT);
+  }
+
+  if (key === VISITOR_FEEDBACK_KEY) {
+    dispatchUpdateEvent(VISITOR_FEEDBACK_UPDATED_EVENT);
+  }
 }
 
 export function loadVisitorRequests(): VisitorRequest[] {

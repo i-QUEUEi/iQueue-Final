@@ -80,7 +80,7 @@ export default function Visits() {
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-slate-50 border-b border-slate-200">
                     <tr>
-                      <th className="py-3 px-4 text-left font-semibold text-slate-700">Date</th>
+                      <th className="py-3 px-4 text-left font-semibold text-slate-700">Date & Time</th>
                       <th className="py-3 px-4 text-left font-semibold text-slate-700">Name</th>
                       <th className="py-3 px-4 text-left font-semibold text-slate-700">Service</th>
                       <th className="py-3 px-4 text-left font-semibold text-slate-700">Contact</th>

@@ -10,16 +10,8 @@ import {
   loadVisitorRequests,
 } from '@/lib/visitor-storage';
 import type { VisitorFeedback, VisitorRequest } from '@/lib/visitor-storage';
-import {
-  fetchAnnouncements,
-  fetchDatasetSummary,
-  fetchHistoricalAnalytics,
-  fetchPredictiveAnalytics,
-  type Announcement,
-  type DatasetSummaryResponse,
-  type HistoricalAnalyticsResponse,
-  type PredictiveAnalyticsResponse,
-} from '@/lib/api';
+import { fetchAnnouncements, type Announcement } from '@/lib/api';
+import { useTodayAtAGlance } from '@/lib/use-today-at-a-glance';
 import { HeaderBranchSelector } from '@/components/layout/HeaderBranchSelector';
 import HeroSection from '@/components/enduser/HeroSection';
 import WeeklyForecastSection from '@/components/admin/WeeklyForecastSection';
@@ -35,38 +27,18 @@ const WAIT_TIME_OPTIONS = [
 const CROWD_OPTIONS = ['Light', 'Moderate', 'Busy', 'Very busy'];
 const PREDICTION_MATCH_OPTIONS = ['Yes', 'Partially', 'No'];
 
-function mapWaitTimeToMinutes(value: string) {
-  switch (value) {
-    case 'Less than 15 minutes':
-      return 12;
-    case '15 - 30 minutes':
-      return 22;
-    case '30 - 60 minutes':
-      return 45;
-    case '1 - 2 hours':
-      return 75;
-    case 'More than 2 hours':
-      return 120;
-    default:
-      return 25;
-  }
-}
-
 export default function LandingPage() {
   const navigate = useNavigate();
   const { branches, selectedBranchId } = useBranch();
   const [visitModalOpen, setVisitModalOpen] = useState(false);
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
-  const [visitorRequests, setVisitorRequests] = useState<VisitorRequest[]>([]);
-  const [visitorFeedback, setVisitorFeedback] = useState<VisitorFeedback[]>([]);
+  const [, setVisitorRequests] = useState<VisitorRequest[]>([]);
+  const [, setVisitorFeedback] = useState<VisitorFeedback[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [announcementLoading, setAnnouncementLoading] = useState(true);
   const [announcementError, setAnnouncementError] = useState<string | null>(null);
-  const [datasetSummary, setDatasetSummary] = useState<DatasetSummaryResponse | null>(null);
-  const [historicalAnalytics, setHistoricalAnalytics] = useState<HistoricalAnalyticsResponse | null>(null);
-  const [predictiveAnalytics, setPredictiveAnalytics] = useState<PredictiveAnalyticsResponse | null>(null);
-  const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState('');
+  const overview = useTodayAtAGlance();
   const [heroVisible, setHeroVisible] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
   const [dateTime, setDateTime] = useState('');
@@ -139,38 +111,27 @@ export default function LandingPage() {
   useEffect(() => {
     let cancelled = false;
 
-    async function loadAnalytics() {
+    async function loadAnnouncements() {
       setAnnouncementLoading(true);
-      setAnalyticsLoading(true);
       setAnnouncementError(null);
 
       try {
-        const [announcementResponse, datasetResponse, historicalResponse, predictiveResponse] = await Promise.all([
-          fetchAnnouncements(),
-          fetchDatasetSummary(),
-          fetchHistoricalAnalytics(),
-          fetchPredictiveAnalytics(),
-        ]);
-
+        const announcementResponse = await fetchAnnouncements();
         if (!cancelled) {
           setAnnouncements(announcementResponse.announcements);
-          setDatasetSummary(datasetResponse);
-          setHistoricalAnalytics(historicalResponse);
-          setPredictiveAnalytics(predictiveResponse);
         }
       } catch (err) {
         if (!cancelled) {
-          setAnnouncementError(err instanceof Error ? err.message : 'Failed to load analytics.');
+          setAnnouncementError(err instanceof Error ? err.message : 'Failed to load announcements.');
         }
       } finally {
         if (!cancelled) {
           setAnnouncementLoading(false);
-          setAnalyticsLoading(false);
         }
       }
     }
 
-    loadAnalytics();
+    loadAnnouncements();
     return () => { cancelled = true; };
   }, []);
 
@@ -200,22 +161,10 @@ export default function LandingPage() {
     return () => window.clearTimeout(timer);
   }, [statusMessage]);
 
-  const confirmedVisits = visitorRequests.filter((request) => request.status === 'confirmed').length;
-  const averageWait = useMemo(() => {
-    if (!visitorFeedback.length) return 25;
-    const total = visitorFeedback.reduce((sum, feedback) => sum + mapWaitTimeToMinutes(feedback.waitTime), 0);
-    return Math.round(total / visitorFeedback.length);
-  }, [visitorFeedback]);
-
-  const averageHistoricalWait = useMemo(() => {
-    const values = historicalAnalytics?.dailyData?.map((item) => item.avgWait) ?? [];
-    if (!values.length) return averageWait;
-    return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
-  }, [averageWait, historicalAnalytics]);
-
-  const totalVisitors = datasetSummary?.totalRecords ?? (branches.reduce((sum, branch) => sum + (branch.visitors || 0), 0) || 1247);
-  const currentCongestion = analyticsLoading ? 'Moderate' : (predictiveAnalytics?.predictions?.afternoon?.congestion ?? 'Moderate');
-  const avgWaitValue = analyticsLoading ? 18 : (datasetSummary?.averageWaitTime ?? averageHistoricalWait);
+  const confirmedVisits = overview.loading ? 0 : overview.confirmedVisits;
+  const totalVisitors = overview.loading ? 0 : overview.totalVisitors;
+  const currentCongestion = overview.loading ? 'Moderate' : overview.currentCongestion;
+  const avgWaitValue = overview.loading ? 18 : overview.avgWait;
 
   const selectedVisitBranch = branches.find((branch) => branch.id === visitForm.branchId) || branches[0];
   const serviceOptions = selectedVisitBranch?.services || [];
@@ -366,7 +315,7 @@ export default function LandingPage() {
           totalVisitors={totalVisitors}
           currentCongestion={currentCongestion}
           averageWait={avgWaitValue}
-          confirmedVisits={analyticsLoading ? 342 : confirmedVisits}
+          confirmedVisits={confirmedVisits}
           heroVisible={heroVisible}
           heroRef={heroRef}
           setVisitModalOpen={setVisitModalOpen}

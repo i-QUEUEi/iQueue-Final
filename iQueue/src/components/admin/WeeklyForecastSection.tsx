@@ -89,6 +89,54 @@ function buildDailyAiInsight(day: WeeklyForecastDay) {
   }
 }
 
+function buildWeeklyForecastInsight(forecast: WeeklyForecastResponse) {
+  const validDays = forecast.days.filter((day) => !day.isHoliday && typeof day.overall === 'number');
+  if (!validDays.length) {
+    return {
+      summary: 'Weekly forecast detail is unavailable. Review the service schedule or wait for additional model output.',
+      analysis: 'No reliable operational summary can be generated until forecast data becomes available for this week.',
+    };
+  }
+
+  const highDays = validDays.filter((day) => day.congestion === 'HIGH');
+  const moderateDays = validDays.filter((day) => day.congestion === 'MODERATE');
+  const lowDays = validDays.filter((day) => day.congestion === 'LOW');
+
+  const sortedByWait = [...validDays].sort((a, b) => (a.overall ?? 0) - (b.overall ?? 0));
+  const bestDay = sortedByWait[0];
+  const worstDay = sortedByWait[sortedByWait.length - 1];
+
+  const averageWait = Math.round(validDays.reduce((sum, day) => sum + (day.overall ?? 0), 0) / validDays.length);
+  const firstDay = validDays[0];
+  const lastDay = validDays[validDays.length - 1];
+  const trend = typeof lastDay.overall === 'number' && typeof firstDay.overall === 'number'
+    ? lastDay.overall > firstDay.overall + 8
+      ? 'rises into the back half of the week'
+      : lastDay.overall < firstDay.overall - 8
+        ? 'eases toward the end of the week'
+        : 'stays relatively stable across the week'
+    : 'follows a steady pattern across the week';
+
+  const peakDaysLabel = highDays.length
+    ? highDays.map((day) => day.dayName).join(' and ')
+    : moderateDays.length
+      ? moderateDays.map((day) => day.dayName).join(' and ')
+      : validDays.map((day) => day.dayName).join(' and ');
+
+  const highRiskText = highDays.length
+    ? `Expect the heaviest queue pressure on ${peakDaysLabel}, with ${worstDay.worstTime ? `peak wait periods around ${worstDay.worstTime}` : 'extended wait windows'}.`
+    : `No days are forecasted as very high congestion, so focus on maintaining steady throughput.`;
+
+  const bestDayText = bestDay
+    ? `${bestDay.dayName} offers the most balanced experience, especially near ${bestDay.bestTime} when waits are lowest.`
+    : 'No clear best day is available from the forecast.';
+
+  return {
+    summary: `The week is expected to average about ${averageWait} minutes of wait time, with ${peakDaysLabel} driving the highest intensity. ${trend}.`,
+    analysis: `${highRiskText} ${bestDayText} ${lowDays.length ? `Lower congestion appears on ${lowDays.map((day) => day.dayName).join(' and ')}, making those days ideal for faster transactions.` : ''}`.trim(),
+  };
+}
+
 export default function WeeklyForecastSection() {
   const today = useMemo(() => {
     const current = new Date();
@@ -107,6 +155,7 @@ export default function WeeklyForecastSection() {
   const [forecast, setForecast] = useState<WeeklyForecastResponse | null>(initialForecast);
   const [loading, setLoading] = useState(!initialForecast);
   const [error, setError] = useState<string | null>(null);
+  const weeklyInsight = useMemo(() => (forecast ? buildWeeklyForecastInsight(forecast) : null), [forecast]);
 
   useEffect(() => {
     let cancelled = false;
@@ -211,7 +260,7 @@ export default function WeeklyForecastSection() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <button
               type="button"
@@ -283,6 +332,25 @@ export default function WeeklyForecastSection() {
             <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Selected Week</p>
             <p className="mt-1 text-sm font-medium text-blue-900">{forecast?.weekLabel ?? 'Waiting for forecast data'}</p>
           </div>
+
+          {weeklyInsight ? (
+            <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm flex-1 flex flex-col">
+              <div className="mb-4 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-blue-600" />
+                <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Overall AI Insight</p>
+              </div>
+              <div className="space-y-4 text-sm text-gray-700 flex-1">
+                <div className="min-h-[90px]">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Weekly Summary</p>
+                  <p className="mt-2 leading-relaxed">{weeklyInsight.summary}</p>
+                </div>
+                <div className="min-h-[90px]">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Forecast Analysis</p>
+                  <p className="mt-2 leading-relaxed">{weeklyInsight.analysis}</p>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div className="space-y-4">

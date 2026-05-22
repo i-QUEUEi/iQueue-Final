@@ -2,17 +2,46 @@ import { useState } from 'react';
 import AdminHeader from '@/components/admin/AdminHeader';
 import BranchOnboardingNotice from '@/components/admin/BranchOnboardingNotice';
 import { useBranchData } from '@/lib/use-branch-data';
+import { useTodayAtAGlance } from '@/lib/use-today-at-a-glance';
 import WeeklyForecastSection from '@/components/admin/WeeklyForecastSection';
 import WaitingTimeHeatmap from '@/components/admin/waiting_time_heatmap';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
 export default function AdminDashboard() {
   const { hasBranchData } = useBranchData();
+  const overview = useTodayAtAGlance();
   const [refreshTime] = useState(new Date().toLocaleTimeString());
 
   const handleRefresh = () => {
     window.location.reload();
   };
+
+  const todayAtAGlanceCards = [
+    {
+      label: 'Total visitors',
+      value: overview.loading ? 'Loading…' : overview.totalVisitors.toLocaleString(),
+      trend: 'up',
+      change: overview.loading ? 'Waiting for live metrics' : 'Live snapshot',
+    },
+    {
+      label: 'Current congestion',
+      value: overview.loading ? 'Loading…' : overview.currentCongestion,
+      trend: 'stable',
+      change: overview.loading ? 'Waiting for live metrics' : 'Based on current forecast',
+    },
+    {
+      label: 'Avg waiting time',
+      value: overview.loading ? 'Loading…' : `${overview.avgWait} min`,
+      trend: 'down',
+      change: overview.loading ? 'Waiting for live metrics' : 'Updated from dataset',
+    },
+    {
+      label: 'Confirmed visits',
+      value: overview.loading ? 'Loading…' : overview.confirmedVisits.toLocaleString(),
+      trend: 'up',
+      change: overview.loading ? 'Waiting for live metrics' : 'Local visitor requests',
+    },
+  ];
 
   if (!hasBranchData) {
     return (
@@ -33,12 +62,7 @@ export default function AdminDashboard() {
         <section>
           <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Today at a Glance</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { label: 'Total visitors', value: '1,247', trend: 'up', change: '+14% vs yesterday' },
-              { label: 'Current congestion', value: 'Moderate', trend: 'stable', change: 'Within normal range' },
-              { label: 'Avg waiting time', value: '18 min', trend: 'down', change: '-2 min improvement' },
-              { label: 'Confirmed visits', value: '342', trend: 'up', change: '27% pre-registered' }
-            ].map((card, idx) => (
+            {todayAtAGlanceCards.map((card, idx) => (
               <div key={idx} className="rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-lg transition-all duration-300 p-6">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">{card.label}</p>
                 <p className="text-3xl font-bold text-gray-900 mb-2">{card.value}</p>
@@ -96,7 +120,7 @@ export default function AdminDashboard() {
                       <span className="font-medium text-gray-900">{peak.hour}</span>
                       <span className={`text-xs font-semibold px-2 py-1 rounded ${
                         peak.status === 'High' ? 'bg-red-200 text-red-700' : 'bg-yellow-200 text-yellow-700'
-                      }`}>
+                      }`}>  
                         {peak.status}
                       </span>
                     </div>
